@@ -290,6 +290,13 @@ BREVO_API_BASE_URL = env("BREVO_API_BASE_URL", "https://api.brevo.com")
 # when there is no request to derive it from.
 SITE_URL = (env("SITE_URL", "") or "").rstrip("/")
 
+# On Render the public hostname is known at boot and may carry a suffix if the
+# name you asked for was taken. Deriving SITE_URL from it means every email link
+# is absolute and correct on the first deploy, with nothing to remember and no
+# chance of pasting the wrong one. An explicit SITE_URL still wins.
+if not SITE_URL and _platform_host:
+    SITE_URL = f"https://{_platform_host}"
+
 # --- Email verification ----------------------------------------------------
 # New accounts must prove they own the address they registered with before they
 # can log in. Accounts created out-of-band (admin, seed data, createsuperuser)

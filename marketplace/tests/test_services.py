@@ -2,9 +2,11 @@
 
 import hashlib
 import hmac
+import os
 from decimal import Decimal
+from unittest import mock
 
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from marketplace.models import Shipment, ShipmentStop
 from marketplace.services import forecasting, logistics, payments, routing
@@ -128,3 +130,74 @@ class LogisticsTests(TestCase):
     def test_plan_shipment_without_orders_raises(self):
         with self.assertRaises(logistics.LogisticsError):
             logistics.plan_shipment([])
+
+
+class SiteUrlDerivationTests(SimpleTestCase):
+    """``SITE_URL`` decides whether an email link works at all.
+
+    With it unset, ``notifications._absolute()`` returns a *relative* path,
+    because notification emails are built from background callbacks that have no
+    request to fall back on. A relative URL in an email is a dead link, and it
+    fails silently: the mail sends, the server logs nothing, and only the
+    recipient notices. These tests pin the derivation so a deploy cannot
+    reintroduce it.
+    """
+
+    def test_render_hostname_is_used_when_site_url_is_unset(self):
+        with mock.patch.dict(
+            os.environ, {"SITE_URL": "", "RENDER_EXTERNAL_HOSTNAME": "app.onrender.com"}
+        ):
+            import importlib
+
+            from config import settings as settings_module
+
+            importlib.reload(settings_module)
+            self.assertEqual(settings_module.SITE_URL, "https://app.onrender.com")
+
+    def test_a_render_suffix_is_kept(self):
+        """Render appends a suffix when the name you asked for is taken."""
+        with mock.patch.dict(
+            os.environ,
+            {"SITE_URL": "", "RENDER_EXTERNAL_HOSTNAME": "app-abc12.onrender.com"},
+        ):
+            import importlib
+
+            from config import settings as settings_module
+
+            importlib.reload(settings_module)
+            self.assertEqual(settings_module.SITE_URL, "https://app-abc12.onrender.com")
+
+    def test_an_explicit_site_url_wins_over_the_hostname(self):
+        with mock.patch.dict(
+            os.environ,
+            {
+                "SITE_URL": "https://my-domain.com",
+                "RENDER_EXTERNAL_HOSTNAME": "app.onrender.com",
+            },
+        ):
+            import importlib
+
+            from config import settings as settings_module
+
+            importlib.reload(settings_module)
+            self.assertEqual(settings_module.SITE_URL, "https://my-domain.com")
+
+    def test_without_a_platform_host_it_stays_empty(self):
+        """Local development falls back to the request, which is correct."""
+        with mock.patch.dict(
+            os.environ, {"SITE_URL": ""}, clear=False
+        ):
+            import importlib
+
+            os.environ.pop("RENDER_EXTERNAL_HOSTNAME", None)
+            from config import settings as settings_module
+
+            importlib.reload(settings_module)
+            self.assertEqual(settings_module.SITE_URL, "")
+
+    def tearDown(self):
+        import importlib
+
+        from config import settings as settings_module
+
+        importlib.reload(settings_module)
