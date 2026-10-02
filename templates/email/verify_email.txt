@@ -1,0 +1,14 @@
+Hi {{ user.first_name|default:user.username }},
+
+Welcome to {{ site_name }}. Please confirm this email address so you can sign in.
+
+Confirm your address:
+{{ verification_url }}
+
+The link works once and expires in {{ expiry_hours }} hours. If it has expired,
+request a new one from the sign-in page.
+
+If you did not create a {{ site_name }} account, you can ignore this message —
+nothing will happen.
+
+— {{ site_name }}

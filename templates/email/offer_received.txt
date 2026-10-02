@@ -1,0 +1,12 @@
+A farmer has answered your request.
+
+{{ farmer_name }} ({{ farmer_village }}) can supply {{ quantity }} {{ unit }} of
+{{ crop_name }} at ₹{{ price_per_unit|floatformat:2 }} per {{ unit }}.
+
+{% if payment_route == "direct" %}Payment: you pay the farmer directly by UPI, with no marketplace fee.
+{% else %}Payment: through {{ site_name }}, with the standard fee deducted before the farmer is paid.
+{% endif %}
+Read the offer and reply:
+{{ request_url }}
+
+— {{ site_name }}

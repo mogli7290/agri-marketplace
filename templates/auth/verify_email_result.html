@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Email confirmation · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                {% if verified %}
+                    <i class="bi bi-patch-check display-5 text-success"></i>
+                    <h1 class="h5 mt-3">Email confirmed</h1>
+                    <p class="text-muted">
+                        Your address is verified. You can sign in now.
+                    </p>
+                    <a class="btn btn-success" href="{% url 'marketplace:login' %}">Sign in</a>
+                {% else %}
+                    <i class="bi bi-exclamation-triangle display-5 text-warning"></i>
+                    <h1 class="h5 mt-3">We could not confirm that link</h1>
+                    <p class="text-muted">{{ error }}</p>
+                    <a class="btn btn-outline-success"
+                       href="{% url 'marketplace:verification_resend' %}">Send a new link</a>
+                    <a class="btn btn-link" href="{% url 'marketplace:login' %}">Back to sign in</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

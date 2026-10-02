@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Logistics · {{ site_name }}{% endblock %}
+
+{% block content %}
+<h1 class="h4 mb-4"><i class="bi bi-truck text-brand"></i> Logistics</h1>
+
+{% if user.is_staff and assignable_orders %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h6 text-brand mb-3">Plan a shipment</h2>
+            <p class="text-muted small">Select orders to bundle into an optimised multi-stop route.</p>
+            <form method="post" action="{% url 'marketplace:plan_shipment' %}">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light"><tr><th></th><th>#</th><th>Crop</th><th>Farmer</th><th>Buyer</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for order in assignable_orders %}
+                                <tr>
+                                    <td><input class="form-check-input" type="checkbox" name="order_ids" value="{{ order.pk }}"></td>
+                                    <td>{{ order.pk }}</td>
+                                    <td>{{ order.listing.crop.name }}</td>
+                                    <td>{{ order.listing.farmer.village }}</td>
+                                    <td>{{ order.buyer.city }}</td>
+                                    <td>{{ order.get_status_display }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-success btn-sm">Optimise &amp; create shipment</button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold">Shipments</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>#</th><th>Status</th><th>Partner</th><th>Stops</th><th>Distance</th><th>Cost</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for shipment in shipments %}
+                    <tr>
+                        <td>{{ shipment.pk }}</td>
+                        <td><span class="badge bg-secondary">{{ shipment.get_status_display }}</span></td>
+                        <td>{{ shipment.partner.name|default:"Unassigned" }}</td>
+                        <td>{{ shipment.stops.count }}</td>
+                        <td>{{ shipment.planned_distance_km|floatformat:1 }} km</td>
+                        <td>₹{{ shipment.planned_cost|floatformat:2 }}</td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-success" href="{% url 'marketplace:shipment_detail' shipment.pk %}">View route</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">No shipments yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

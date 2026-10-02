@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Request #{{ request_obj.pk }} · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">
+        {{ request_obj.quantity|floatformat:2 }} {{ request_obj.unit }} {{ request_obj.crop.name }}
+        <span class="badge bg-{% if request_obj.status == 'open' %}success{% else %}secondary{% endif %}">
+            {{ request_obj.get_status_display }}
+        </span>
+    </h1>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'marketplace:my_requests' %}">Back</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-4">Deliver to</dt><dd class="col-8">{{ request_obj.delivery_city }}</dd>
+                    <dt class="col-4">Buyer budget</dt>
+                    <dd class="col-8">
+                        {% if request_obj.target_price %}~₹{{ request_obj.target_price|floatformat:2 }}/{{ request_obj.unit }}{% else %}Open to offers{% endif %}
+                    </dd>
+                    <dt class="col-4">Needed by</dt>
+                    <dd class="col-8">{{ request_obj.needed_by|default:"No deadline" }}</dd>
+                    <dt class="col-4">Posted</dt>
+                    <dd class="col-8">{{ request_obj.created_at|naturaltime }}</dd>
+                    {% if request_obj.notes %}
+                        <dt class="col-4">Notes</dt><dd class="col-8">{{ request_obj.notes }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Offers</div>
+            <div class="card-body">
+                {% for offer in offers %}
+                    <div class="border rounded p-3 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ offer.farmer.full_name }}</strong>
+                            <span class="badge bg-secondary">{{ offer.get_status_display }}</span>
+                        </div>
+                        <div class="small text-muted mb-2">
+                            {{ offer.farmer.village }}, {{ offer.farmer.district }}
+                            {% if offer.farmer.is_fpo %}<span class="badge bg-light text-dark">FPO</span>{% endif %}
+                        </div>
+                        <div class="mb-2">
+                            <strong>₹{{ offer.price_per_unit|floatformat:2 }}/{{ request_obj.unit }}</strong>
+                            × {{ offer.quantity|floatformat:2 }} {{ request_obj.unit }}
+                            <span class="text-muted">(≈ ₹{{ offer.total_value|floatformat:2 }})</span>
+                        </div>
+                        <div class="small mb-2">
+                            {% if offer.payment_route == 'direct' %}
+                                <span class="badge bg-light text-dark">Pay me directly · 0% platform fee</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">Via the platform · settled after delivery</span>
+                            {% endif %}
+                        </div>
+                        {% if offer.message %}
+                            <p class="small mb-2">"{{ offer.message }}"</p>
+                        {% endif %}
+
+                        {% if is_owner and offer.status == 'pending' %}
+                            <form method="post" action="{% url 'marketplace:request_offer_action' offer.pk 'accept' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button class="btn btn-success btn-sm">Accept &amp; create order</button>
+                            </form>
+                            <form method="post" action="{% url 'marketplace:request_offer_action' offer.pk 'reject' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button class="btn btn-outline-danger btn-sm">Decline</button>
+                            </form>
+                        {% elif is_farmer and offer.status == 'pending' %}
+                            <form method="post" action="{% url 'marketplace:request_offer_action' offer.pk 'withdraw' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button class="btn btn-outline-secondary btn-sm">Withdraw</button>
+                            </form>
+                        {% elif offer.order_id %}
+                            <a class="btn btn-sm btn-outline-success" href="{% url 'marketplace:order_detail' offer.order_id %}">
+                                Order #{{ offer.order_id }}
+                            </a>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <p class="text-muted mb-0">
+                        {% if is_owner %}No offers yet.{% else %}You have not responded to this request.{% endif %}
+                    </p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        {% if offer_form %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white fw-semibold">Make an offer</div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'marketplace:request_offer_create' request_obj.pk %}">
+                        {% csrf_token %}
+                        {% for field in offer_form %}
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                                {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endfor %}
+                        <button class="btn btn-success w-100">Send offer</button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Messages</div>
+            <div class="card-body">
+                {% for conversation in conversations %}
+                    <div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">
+                        <span class="small">
+                            {% if is_owner %}{{ conversation.farmer.full_name }}{% else %}{{ conversation.buyer }}{% endif %}
+                        </span>
+                        <a class="btn btn-sm btn-outline-success"
+                           href="{% url 'marketplace:conversation' conversation.pk %}">Open</a>
+                    </div>
+                {% empty %}
+                    <p class="text-muted small mb-0">
+                        A message thread opens automatically when you send or receive an offer.
+                    </p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

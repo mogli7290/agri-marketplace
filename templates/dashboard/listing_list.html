@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Browse produce · {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="hero mb-4">
+    <canvas class="hero-canvas" data-hero-canvas aria-hidden="true"></canvas>
+    <h1 class="h3 mb-2">Fresh from the farm, straight to you</h1>
+    <p class="mb-0 opacity-75">Buy directly from farmers and FPOs — better prices for them, lower prices for you.</p>
+</section>
+
+<form method="get" class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small mb-1">Search</label>
+                <input type="search" name="q" value="{{ filters.q }}" class="form-control" placeholder="Crop, farmer or village">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Crop</label>
+                <select name="crop" class="form-select">
+                    <option value="">All crops</option>
+                    {% for crop in crops %}
+                        <option value="{{ crop.pk }}" {% if filters.crop == crop.pk|stringformat:"s" %}selected{% endif %}>{{ crop.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">District</label>
+                <input type="text" name="district" value="{{ filters.district }}" class="form-control" placeholder="e.g. Nashik">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small mb-1">Min ₹</label>
+                <input type="number" name="price_min" value="{{ filters.price_min }}" class="form-control" min="0">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small mb-1">Max ₹</label>
+                <input type="number" name="price_max" value="{{ filters.price_max }}" class="form-control" min="0">
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-success flex-grow-1" type="submit">Filter</button>
+                <a href="{% url 'marketplace:listing_list' %}" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </div>
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="organic" id="organic" value="1" {% if filters.organic %}checked{% endif %}>
+            <label class="form-check-label small" for="organic">Organic only</label>
+        </div>
+    </div>
+</form>
+
+{% if listings %}
+    <div class="row g-4">
+        {% for listing in listings %}
+            <div class="col-sm-6 col-lg-4 col-xl-3 reveal">
+                {% include "includes/_listing_card.html" with listing=listing %}
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+        <nav class="mt-4" aria-label="Pagination">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                {% endif %}
+                <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-basket2 fs-1"></i>
+        <p class="mt-3 mb-0">No listings match your filters yet.</p>
+    </div>
+{% endif %}
+{% endblock %}

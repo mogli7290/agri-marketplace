@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Demand forecasts · {{ site_name }}{% endblock %}
+
+{% block content %}
+<h1 class="h4 mb-1"><i class="bi bi-graph-up-arrow text-brand"></i> Demand forecasting</h1>
+<p class="text-muted">Estimate upcoming demand and a fair price using recent order history and market signals.</p>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <form id="forecast-form" data-url="{% url 'marketplace:forecast_request' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Crop</label>
+                        <select name="crop" class="form-select" required>
+                            {% for crop in crops %}<option value="{{ crop.pk }}">{{ crop.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Region (district)</label>
+                        <input type="text" name="region" class="form-control" value="{{ farmer_profile.district|default:'' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Horizon (days)</label>
+                        <input type="number" name="horizon_days" class="form-control" value="7" min="1" max="365">
+                    </div>
+                    <button class="btn btn-success w-100">Generate forecast</button>
+                </form>
+                <div id="forecast-result" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Recent forecasts</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light"><tr><th>Crop</th><th>Region</th><th>Horizon</th><th>Demand</th><th>Price</th><th>Confidence</th><th>Method</th></tr></thead>
+                    <tbody>
+                        {% for f in recent %}
+                            <tr>
+                                <td>{{ f.crop.name }}</td>
+                                <td>{{ f.region }}</td>
+                                <td>{{ f.horizon_days }}d</td>
+                                <td>{{ f.predicted_quantity|default:"—"|floatformat:0 }}</td>
+                                <td>{{ f.predicted_price_per_unit|default:"—"|floatformat:2 }}</td>
+                                <td>{{ f.confidence }}%</td>
+                                <td><span class="badge badge-grade">{{ f.get_method_display }}</span></td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="7" class="text-center text-muted py-4">No forecasts generated yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

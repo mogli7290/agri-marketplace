@@ -1,0 +1,12 @@
+A delivery has been disputed — order #{{ order_id }}.
+
+{{ quantity }} {{ unit }} of {{ crop_name }} to {{ farmer_name }}
+
+The buyer says: {{ reason }}
+
+The delivery charge for this stop is on hold until we sort it out. Reply to this
+email if you have more to add.
+
+{{ shipment_url }}
+
+— {{ site_name }}

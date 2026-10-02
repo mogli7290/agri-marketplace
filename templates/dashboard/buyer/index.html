@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Buyer dashboard · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h4 mb-0">{{ buyer.business_name|default:user.get_full_name|default:user.username }}</h1>
+        <p class="text-muted mb-0">{{ buyer.get_buyer_type_display }} · {{ buyer.city }}</p>
+    </div>
+    <a href="{% url 'marketplace:listing_list' %}" class="btn btn-success"><i class="bi bi-shop"></i> Browse produce</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-4"><div class="stat-card"><div class="stat-number" data-count="{{ total_orders }}">{{ total_orders }}</div><div class="stat-label">Total orders</div></div></div>
+    <div class="col-sm-4"><div class="stat-card"><div class="stat-number" data-count="{{ pending_payment }}">{{ pending_payment }}</div><div class="stat-label">Awaiting payment</div></div></div>
+    <div class="col-sm-4"><div class="stat-card"><div class="stat-number" data-count="{{ spend|floatformat:0 }}" data-prefix="₹">₹{{ spend|floatformat:0|intcomma }}</div><div class="stat-label">Total spend</div></div></div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold">My orders</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>#</th><th>Crop</th><th>Farmer</th><th>Qty</th><th>Total</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td>{{ order.pk }}</td>
+                        <td>{{ order.listing.crop.name }}</td>
+                        <td>{{ order.listing.farmer.full_name }}</td>
+                        <td>{{ order.quantity_ordered|floatformat:0 }} {{ order.listing.crop.unit }}</td>
+                        <td>₹{{ order.total_amount|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                            {% if order.payment_status == 'paid' %}<span class="badge bg-success">Paid</span>{% endif %}
+                        </td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-success" href="{% url 'marketplace:order_detail' order.pk %}">Open</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">You haven't placed any orders yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

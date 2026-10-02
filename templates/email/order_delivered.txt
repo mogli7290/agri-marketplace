@@ -1,0 +1,9 @@
+Order #{order_id} has been delivered.
+
+{{ quantity }} {{ unit }} of {{ crop_name }} from {{ farmer_name }} arrived.
+Thank you for trading on {{ site_name }}.
+
+See the order:
+{{ order_url }}
+
+— {{ site_name }}

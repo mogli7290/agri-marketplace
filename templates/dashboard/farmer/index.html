@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Farmer dashboard · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h4 mb-0">{{ farmer.full_name }}</h1>
+        <p class="text-muted mb-0">{{ farmer.village }}, {{ farmer.district }}{% if farmer.is_fpo %} · FPO{% endif %}</p>
+    </div>
+    <a href="{% url 'marketplace:listing_create' %}" class="btn btn-success"><i class="bi bi-plus-lg"></i> New listing</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-4"><div class="stat-card"><div class="stat-number" data-count="{{ active_listings }}">{{ active_listings }}</div><div class="stat-label">Active listings</div></div></div>
+    <div class="col-sm-4"><div class="stat-card"><div class="stat-number" data-count="{{ total_orders }}">{{ total_orders }}</div><div class="stat-label">Orders received</div></div></div>
+    <div class="col-sm-4"><div class="stat-card"><div class="stat-number" data-count="{{ revenue|floatformat:0 }}" data-prefix="₹">₹{{ revenue|floatformat:0|intcomma }}</div><div class="stat-label">Settled revenue</div></div></div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4" data-reveal>
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">My listings</span>
+        <a href="{% url 'marketplace:forecast' %}" class="small text-brand">Check demand forecasts →</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Crop</th><th>Qty left</th><th>Price</th><th>Grade</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for listing in listings %}
+                    <tr>
+                        <td>{{ listing.crop.name }}</td>
+                        <td>{{ listing.quantity_available|floatformat:0 }} {{ listing.crop.unit }}</td>
+                        <td>₹{{ listing.price_per_unit|floatformat:2 }}</td>
+                        <td>{{ listing.quality_grade }}</td>
+                        <td><span class="badge bg-secondary">{{ listing.get_status_display }}</span></td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" href="{% url 'marketplace:listing_detail' listing.pk %}">View</a>
+                            {% if listing.status == 'active' %}
+                                <a class="btn btn-sm btn-outline-success" href="{% url 'marketplace:listing_update' listing.pk %}">Edit</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No listings yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm" data-reveal>
+    <div class="card-header bg-white fw-semibold">Orders received</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>#</th><th>Crop</th><th>Buyer</th><th>Qty</th><th>Status</th><th>Payment</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td>{{ order.pk }}</td>
+                        <td>{{ order.listing.crop.name }}</td>
+                        <td>{{ order.buyer }}</td>
+                        <td>{{ order.quantity_ordered|floatformat:0 }}</td>
+                        <td><span class="badge bg-secondary">{{ order.get_status_display }}</span></td>
+                        <td>
+                            {% if order.payment_status == 'paid' %}<span class="badge bg-success">Paid</span>
+                            {% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}
+                        </td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{% url 'marketplace:order_detail' order.pk %}">Manage</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">No orders yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

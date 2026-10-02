@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Edit listing{% else %}New listing{% endif %} · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h5 mb-4">{% if object %}Edit listing{% else %}Publish a new listing{% endif %}</h1>
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.crop.id_for_label }}">Crop</label>
+                            {{ form.crop }}
+                            {% if form.crop.errors %}<div class="text-danger small">{{ form.crop.errors|striptags }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label d-flex justify-content-between">
+                                Price per unit
+                                <button type="button" class="btn btn-sm btn-outline-success py-0"
+                                        id="price-hint-btn" data-url="{% url 'marketplace:listing_price_hint' %}">
+                                    <i class="bi bi-stars"></i> Suggest price
+                                </button>
+                            </label>
+                            {{ form.price_per_unit }}
+                            {% if form.price_per_unit.errors %}<div class="text-danger small">{{ form.price_per_unit.errors|striptags }}</div>{% endif %}
+                        </div>
+                        <div class="col-12"><div id="price-hint-output" class="small text-muted"></div></div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="{{ form.quantity_available.id_for_label }}">Quantity available</label>
+                            {{ form.quantity_available }}
+                            {% if form.quantity_available.errors %}<div class="text-danger small">{{ form.quantity_available.errors|striptags }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="{{ form.quality_grade.id_for_label }}">Quality grade</label>
+                            {{ form.quality_grade }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="{{ form.harvest_date.id_for_label }}">Harvest date</label>
+                            {{ form.harvest_date }}
+                            {% if form.harvest_date.errors %}<div class="text-danger small">{{ form.harvest_date.errors|striptags }}</div>{% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                            {{ form.description }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.photo.id_for_label }}">Photo</label>
+                            {{ form.photo }}
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check">
+                                {{ form.is_organic }}
+                                <label class="form-check-label" for="{{ form.is_organic.id_for_label }}">Grown organically</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-success">{% if object %}Save changes{% else %}Publish listing{% endif %}</button>
+                        <a href="{% url 'marketplace:farmer_dashboard' %}" class="btn btn-link">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

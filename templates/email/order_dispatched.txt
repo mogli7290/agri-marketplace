@@ -1,0 +1,9 @@
+Your order is on the way.
+
+Order #{order_id} — {{ quantity }} {{ unit }} of {{ crop_name }} from {{ farmer_name }}
+is being transported now. It was picked up from {{ pickup_hub }}.
+
+Track your order:
+{{ order_url }}
+
+— {{ site_name }}

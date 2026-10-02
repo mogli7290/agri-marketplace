@@ -1,0 +1,9 @@
+We have your payment.
+
+Order #{order_id} — {{ quantity }} {{ unit }} of {{ crop_name }} from {{ farmer_name }}
+Total paid: ₹{{ amount|floatformat:2 }}
+
+Track your order:
+{{ order_url }}
+
+— {{ site_name }}

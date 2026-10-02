@@ -1,0 +1,24 @@
+{% extends "email/_layout.html" %}
+{% block body %}
+<h1 style="margin:0 0 12px;font-size:18px;">Your payment has been sent</h1>
+<p style="margin:0 0 16px;">
+    Hello {{ recipient }}, statement <strong>#{{ payout_id }}</strong> covering
+    {{ period_start|date:"j M Y" }} to {{ period_end|date:"j M Y" }} has been paid.
+</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:14px;">
+    {% for item in items %}
+    <tr>
+        <td style="padding:5px 0;color:#6b7a72;">{{ item.label }}</td>
+        <td align="right" style="padding:5px 0;">₹{{ item.amount|floatformat:2 }}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td style="padding:8px 0;border-top:1px solid #e3e7e4;font-weight:600;">Total</td>
+        <td align="right" style="padding:8px 0;border-top:1px solid #e3e7e4;font-weight:600;">₹{{ amount|floatformat:2 }}</td>
+    </tr>
+    <tr><td style="padding:5px 0;color:#6b7a72;">Reference</td><td align="right" style="padding:5px 0;font-size:13px;">{{ reference }}</td></tr>
+</table>
+<p style="margin:20px 0 0;">
+    <a href="{{ earnings_url }}" style="display:inline-block;background:#1f7a3f;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:6px;font-weight:600;">See your statement</a>
+</p>
+{% endblock %}

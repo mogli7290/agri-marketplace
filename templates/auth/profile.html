@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}My profile · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-person-circle text-brand" style="font-size: 3rem;"></i>
+                    <div class="ms-3">
+                        <h1 class="h5 mb-0">{{ user.get_full_name|default:user.username }}</h1>
+                        <span class="text-muted small">{{ user.email }}</span>
+                    </div>
+                </div>
+                <dl class="row mb-0">
+                    <dt class="col-4">Username</dt><dd class="col-8">{{ user.username }}</dd>
+                    <dt class="col-4">Joined</dt><dd class="col-8">{{ user.date_joined|date:"d M Y" }}</dd>
+                    <dt class="col-4">Account</dt>
+                    <dd class="col-8">
+                        {% if farmer_profile %}Farmer / FPO{% elif buyer_profile %}{{ buyer_profile.get_buyer_type_display }}{% else %}Member{% endif %}
+                    </dd>
+                </dl>
+                <a href="{% url 'marketplace:profile_edit' %}" class="btn btn-outline-success mt-3">
+                    <i class="bi bi-pencil"></i> Edit profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                {% if farmer_profile %}
+                    <h2 class="h6 text-brand mb-3"><i class="bi bi-tree"></i> Farm details</h2>
+                    <dl class="row mb-0">
+                        <dt class="col-5">Name</dt><dd class="col-7">{{ farmer_profile.full_name }}</dd>
+                        <dt class="col-5">Phone</dt><dd class="col-7">{{ farmer_profile.phone_number }}</dd>
+                        <dt class="col-5">Location</dt><dd class="col-7">{{ farmer_profile.village }}, {{ farmer_profile.district }}, {{ farmer_profile.state }}</dd>
+                        <dt class="col-5">FPO</dt><dd class="col-7">{{ farmer_profile.is_fpo|yesno:"Yes,No" }}</dd>
+                        <dt class="col-5">KYC</dt>
+                        <dd class="col-7">
+                            {% if farmer_profile.kyc_verified %}
+                                <span class="badge bg-success">Verified</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                {% elif buyer_profile %}
+                    <h2 class="h6 text-brand mb-3"><i class="bi bi-basket"></i> Buyer details</h2>
+                    <dl class="row mb-0">
+                        <dt class="col-5">Type</dt><dd class="col-7">{{ buyer_profile.get_buyer_type_display }}</dd>
+                        <dt class="col-5">Business</dt><dd class="col-7">{{ buyer_profile.business_name|default:"—" }}</dd>
+                        <dt class="col-5">Phone</dt><dd class="col-7">{{ buyer_profile.phone_number }}</dd>
+                        <dt class="col-5">City</dt><dd class="col-7">{{ buyer_profile.city }}</dd>
+                        <dt class="col-5">Address</dt><dd class="col-7">{{ buyer_profile.address|default:"—" }}</dd>
+                    </dl>
+                {% else %}
+                    <p class="text-muted mb-0">No marketplace profile is linked to this account.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+# Web framework
+Django==5.2.17
+djangorestframework==3.18.1
+djangorestframework-simplejwt==5.5.1
+
+# API / cross-cutting
+django-filter==26.1
+django-cors-headers==4.9.0
+
+# Serving & static files
+gunicorn==23.0.0
+whitenoise==6.12.0
+
+# Database
+psycopg2-binary==2.9.13
+
+# Cache / queue
+redis==8.1.0
+django-redis==7.0.0
+django-storages==1.14.6
+
+# Integrations
+requests==2.33.1
+openai==2.54.0
+Pillow==12.3.0

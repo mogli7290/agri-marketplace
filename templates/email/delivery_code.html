@@ -1,0 +1,18 @@
+{% extends "email/_layout.html" %}
+{% block body %}
+<h1 style="margin:0 0 12px;font-size:18px;">Your delivery code</h1>
+<p style="margin:0 0 16px;">
+    Show this to the driver when order <strong>#{{ order_id }}</strong> —
+    {{ quantity|floatformat:2 }} {{ unit }} of {{ crop_name }} — reaches you.
+    They cannot mark it delivered without it.
+</p>
+<p style="margin:0 0 16px;font-size:30px;letter-spacing:8px;font-weight:700;color:#1f7a3f;">
+    {{ code }}
+</p>
+<p style="margin:0 0 16px;color:#6b7a72;font-size:13px;">
+    The code expires in {{ expires_hours }} hours. Never share it with anyone else.
+</p>
+<p style="margin:20px 0 0;">
+    <a href="{{ order_url }}" style="display:inline-block;background:#1f7a3f;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:6px;font-weight:600;">View your order</a>
+</p>
+{% endblock %}

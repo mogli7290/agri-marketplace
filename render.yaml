@@ -1,0 +1,58 @@
+# Render Blueprint — 100% free: free Docker web service + free Postgres.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Push this repo, then in Render choose "New +" -> "Blueprint" and point it at
+# the repo. Render provisions the database and injects DATABASE_URL
+# automatically. Everything below is free; no paid add-ons are required.
+
+databases:
+  - name: agrimarket-db
+    plan: free
+    databaseName: agrimarket
+    user: agrimarket
+
+services:
+  - type: web
+    name: agrimarket
+    runtime: docker
+    plan: free
+    region: singapore # nearest free region to India; change if you prefer
+    healthCheckPath: /healthz/
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      # Optional; settings also auto-trust RENDER_EXTERNAL_HOSTNAME.
+      - key: DJANGO_ALLOWED_HOSTS
+        value: agrimarket.onrender.com
+      - key: DJANGO_TIME_ZONE
+        value: Asia/Kolkata
+      - key: SEED_ON_BOOT
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agrimarket-db
+          property: connectionString
+
+      # Fill these in the Render dashboard after the first deploy.
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_BASE_URL
+        value: https://api.sambanova.ai/v1
+      - key: AI_MODEL
+        value: Meta-Llama-3.1-8B-Instruct
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      # Optional admin bootstrap (set once, then remove).
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
+      # No REDIS_URL: the app uses an in-process cache by default, free.

@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-agrimarket}
+      POSTGRES_USER: ${POSTGRES_USER:-agrimarket}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agrimarket}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agrimarket}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DJANGO_DEBUG: "false"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-agrimarket}:${POSTGRES_PASSWORD:-agrimarket}@db:5432/${POSTGRES_DB:-agrimarket}
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

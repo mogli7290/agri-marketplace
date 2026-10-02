@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Sign in · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+                <h1 class="h4 mb-1">Welcome back</h1>
+                <p class="text-muted mb-4">Sign in with your username or email.</p>
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors|striptags }}</div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">Username or email</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>{% endif %}
+                    </div>
+                    <div class="mb-4">
+                        <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>{% endif %}
+                        <div class="text-end mt-1">
+                            <a href="{% url 'marketplace:password_reset_request' %}" class="small">Forgot your password?</a>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Sign in</button>
+                </form>
+
+                <p class="text-center text-muted mt-4 mb-0">
+                    New here? <a href="{% url 'marketplace:register' %}" class="text-brand">Create an account</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

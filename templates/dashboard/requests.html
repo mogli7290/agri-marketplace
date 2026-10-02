@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Buyer requests · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0"><i class="bi bi-bullseye text-brand"></i> What buyers want</h1>
+    {% if not can_direct %}
+        <a class="btn btn-outline-success btn-sm" href="{% url 'marketplace:payout_methods' %}">
+            <i class="bi bi-wallet2"></i> Add your UPI ID to take direct payments
+        </a>
+    {% endif %}
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-sm-6 col-md-4">
+        <select name="crop" class="form-select form-select-sm">
+            <option value="">All crops</option>
+            {% for crop in crops %}
+                <option value="{{ crop.pk }}" {% if selected_crop.pk == crop.pk %}selected{% endif %}>
+                    {{ crop.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-sm btn-outline-success">Filter</button></div>
+</form>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Wanted</th><th>Deliver to</th><th>Budget</th><th>Needed by</th><th>Posted</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                    <tr>
+                        <td>
+                            <strong>{{ req.quantity|floatformat:2 }} {{ req.unit }}</strong>
+                            {{ req.crop.name }}
+                            {% if req.notes %}<div class="text-muted small">{{ req.notes|truncatechars:60 }}</div>{% endif %}
+                        </td>
+                        <td>{{ req.delivery_city }}</td>
+                        <td>
+                            {% if req.target_price %}
+                                ~₹{{ req.target_price|floatformat:2 }}/{{ req.unit }}
+                            {% else %}
+                                <span class="text-muted">open</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">
+                            {% if req.needed_by %}{{ req.needed_by }}{% else %}—{% endif %}
+                        </td>
+                        <td class="text-muted small">{{ req.created_at|naturaltime }}</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-success"
+                               href="{% url 'marketplace:request_detail' req.pk %}">
+                                Respond
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">
+                        No open requests right now. Check back soon.
+                    </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<p class="text-muted small mt-3">
+    Contact details stay hidden until a buyer accepts your offer — that's what keeps the board
+    free of spam for buyers.
+</p>
+{% endblock %}

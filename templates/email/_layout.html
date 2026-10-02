@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ site_name }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f7f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2d26;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7f5;padding:24px 12px;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e3e7e4;">
+                <tr>
+                    <td style="background:#1f7a3f;padding:18px 24px;color:#ffffff;font-size:18px;font-weight:600;">
+                        {{ site_name }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:24px;font-size:15px;line-height:1.6;">
+                        {% block body %}{% endblock %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:16px 24px;background:#fafbf9;border-top:1px solid #e3e7e4;color:#6b7a72;font-size:12px;line-height:1.6;">
+                        {% block footer %}
+                        You are getting this because you have an account on {{ site_name }}.
+                        <br>Need help? Reply to this email.
+                        {% endblock %}
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

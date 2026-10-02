@@ -1,0 +1,28 @@
+{% load humanize %}
+<div class="card listing-card">
+    {% if listing.photo %}
+        <img src="{{ listing.photo.url }}" class="listing-photo" alt="{{ listing.crop.name }}">
+    {% else %}
+        <div class="placeholder-photo"><i class="bi bi-flower2"></i></div>
+    {% endif %}
+    <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start">
+            <h3 class="h6 mb-1">{{ listing.crop.name }}</h3>
+            <span class="badge badge-grade">Grade {{ listing.quality_grade }}</span>
+        </div>
+        <p class="text-muted small mb-2">
+            <i class="bi bi-geo-alt"></i> {{ listing.farmer.village }}, {{ listing.farmer.district }}
+        </p>
+        <p class="mb-1">
+            <span class="fw-bold text-brand">₹{{ listing.price_per_unit|floatformat:2 }}</span>
+            <span class="text-muted small">/ {{ listing.crop.unit }}</span>
+        </p>
+        <p class="text-muted small mb-3">
+            {{ listing.quantity_available|floatformat:0 }} {{ listing.crop.unit }} available
+            {% if listing.is_organic %}· <span class="badge badge-organic">Organic</span>{% endif %}
+        </p>
+        <a href="{% url 'marketplace:listing_detail' listing.pk %}" class="btn btn-outline-success btn-sm mt-auto stretched-link">
+            View details
+        </a>
+    </div>
+</div>

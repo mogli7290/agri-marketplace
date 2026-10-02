@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ listing.crop.name }} from {{ listing.farmer.village }} · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        {% if listing.photo %}
+            <img src="{{ listing.photo.url }}" class="img-fluid rounded shadow-sm" alt="{{ listing.crop.name }}">
+        {% else %}
+            <div class="placeholder-photo rounded"><i class="bi bi-flower2"></i></div>
+        {% endif %}
+    </div>
+    <div class="col-lg-7">
+        <div class="d-flex justify-content-between align-items-start">
+            <h1 class="h3 mb-1">{{ listing.crop.name }}</h1>
+            <span class="badge badge-grade fs-6">Grade {{ listing.quality_grade }}</span>
+        </div>
+        <p class="text-muted">
+            <i class="bi bi-geo-alt"></i> {{ listing.farmer.full_name }}{% if listing.farmer.is_fpo %} (FPO){% endif %},
+            {{ listing.farmer.village }}, {{ listing.farmer.district }}, {{ listing.farmer.state }}
+        </p>
+        <p class="fs-4 mb-1">
+            <span class="fw-bold text-brand">₹{{ listing.price_per_unit|floatformat:2 }}</span>
+            <span class="text-muted fs-6">/ {{ listing.crop.unit }}</span>
+        </p>
+        <p class="mb-3">
+            <span class="badge bg-secondary">{{ listing.get_status_display }}</span>
+            {{ listing.quantity_available|floatformat:0 }} {{ listing.crop.unit }} available
+            {% if listing.is_organic %}· <span class="badge badge-organic">Organic</span>{% endif %}
+        </p>
+        {% if listing.description %}<p>{{ listing.description }}</p>{% endif %}
+
+        <dl class="row small text-muted">
+            <dt class="col-4">Harvest date</dt><dd class="col-8">{{ listing.harvest_date|date:"d M Y" }}</dd>
+            <dt class="col-4">Listed</dt><dd class="col-8">{{ listing.created_at|naturaltime }}</dd>
+            {% if listing.ai_suggested_price %}
+                <dt class="col-4">AI suggested</dt><dd class="col-8">₹{{ listing.ai_suggested_price|floatformat:2 }} / {{ listing.crop.unit }}</dd>
+            {% endif %}
+        </dl>
+
+        {% if can_place_order %}
+            <div class="card bg-brand-light border-0 mt-3">
+                <div class="card-body">
+                    {% if my_offer %}
+                        <div class="alert alert-warning py-2 small">
+                            You have a pending offer of <strong>₹{{ my_offer.proposed_price }}</strong>
+                            awaiting the farmer's approval.
+                            <a href="{% url 'marketplace:offers' %}">View my offers</a>
+                        </div>
+                    {% endif %}
+
+                    <h2 class="h6 mb-3"><i class="bi bi-basket"></i> Buy now</h2>
+                    <form method="post" action="{% url 'marketplace:order_create' listing.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            <label class="form-label" for="{{ order_form.quantity_ordered.id_for_label }}">
+                                Quantity ({{ listing.crop.unit }})
+                            </label>
+                            {{ order_form.quantity_ordered }}
+                            {% if order_form.quantity_ordered.errors %}<div class="text-danger small">{{ order_form.quantity_ordered.errors|striptags }}</div>{% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Order at ₹{{ listing.price_per_unit|floatformat:2 }}/{{ listing.crop.unit }}</button>
+                        <p class="small text-muted mt-2 mb-0">Platform fee and delivery are calculated at checkout.</p>
+                    </form>
+
+                    {% if offer_form %}
+                        <hr>
+                        <h3 class="h6 mb-3"><i class="bi bi-chat-left-text"></i> Or propose your own price</h3>
+                        <form method="post" action="{% url 'marketplace:offer_create' listing.pk %}">
+                            {% csrf_token %}
+                            <div class="row g-3">
+                                <div class="col-sm-5">
+                                    <label class="form-label" for="{{ offer_form.quantity_requested.id_for_label }}">Quantity</label>
+                                    {{ offer_form.quantity_requested }}
+                                    {% if offer_form.quantity_requested.errors %}<div class="text-danger small">{{ offer_form.quantity_requested.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-sm-7">
+                                    <label class="form-label" for="{{ offer_form.proposed_price.id_for_label }}">Your price per unit</label>
+                                    {{ offer_form.proposed_price }}
+                                    {% if offer_form.proposed_price.errors %}<div class="text-danger small">{{ offer_form.proposed_price.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="{{ offer_form.message.id_for_label }}">Note to the farmer (optional)</label>
+                                    {{ offer_form.message }}
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-outline-success mt-3 w-100">Send offer to {{ listing.farmer.full_name }}</button>
+                            <p class="small text-muted mt-2 mb-0">The farmer reviews your price and can accept (creating the order at your price) or reject it.</p>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% elif not user.is_authenticated %}
+            <a href="{% url 'marketplace:login' %}?next={{ request.path }}" class="btn btn-success mt-3">Sign in to order</a>
+        {% elif farmer_profile and listing.farmer.user_id == user.id %}
+            <a href="{% url 'marketplace:listing_update' listing.pk %}" class="btn btn-outline-success mt-3">Edit this listing</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if is_owner and incoming_offers %}
+    <hr class="my-5">
+    <h2 class="h5 mb-3">Offers on this listing</h2>
+    <ul class="list-unstyled mb-0">
+        {% for offer in incoming_offers %}
+            <li class="d-flex flex-wrap justify-content-between align-items-center border-bottom py-3">
+                <div>
+                    <strong class="text-brand">₹{{ offer.proposed_price|floatformat:2 }}</strong>
+                    × {{ offer.quantity_requested|floatformat:0 }} {{ listing.crop.unit }}
+                    <span class="text-muted small">from {{ offer.buyer }} · {{ offer.created_at|naturaltime }}</span>
+                    {% if offer.message %}<div class="small"><em>"{{ offer.message }}"</em></div>{% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                    {% if offer.status == 'pending' %}
+                        <form method="post" action="{% url 'marketplace:offer_action' offer.pk 'accept' %}">{% csrf_token %}<button class="btn btn-success btn-sm">Accept</button></form>
+                        <form method="post" action="{% url 'marketplace:offer_action' offer.pk 'reject' %}">{% csrf_token %}<button class="btn btn-outline-danger btn-sm">Reject</button></form>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ offer.get_status_display }}</span>
+                    {% endif %}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if related %}
+    <hr class="my-5">
+    <h2 class="h5 mb-3">More {{ listing.crop.name }}</h2>
+    <div class="row g-4">
+        {% for item in related %}
+            <div class="col-sm-6 col-lg-3">{% include "includes/_listing_card.html" with listing=item %}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}

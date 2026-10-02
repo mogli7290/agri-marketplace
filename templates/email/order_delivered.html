@@ -1,0 +1,11 @@
+{% extends "email/_layout.html" %}
+{% block body %}
+<h1 style="margin:0 0 12px;font-size:18px;">Delivered</h1>
+<p style="margin:0 0 16px;">
+    Order <strong>#{{ order_id }}</strong> — {{ quantity|floatformat:2 }} {{ unit }} of
+    <strong>{{ crop_name }}</strong> from {{ farmer_name }} — has arrived.
+</p>
+<p style="margin:20px 0 0;">
+    <a href="{{ order_url }}" style="display:inline-block;background:#1f7a3f;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:6px;font-weight:600;">See the order</a>
+</p>
+{% endblock %}

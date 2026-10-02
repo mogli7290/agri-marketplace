@@ -1,0 +1,11 @@
+New order for your {{ crop_name }}.
+
+{{ buyer_name }} has ordered {{ quantity }} {{ unit }} of {{ crop_name }}
+at ₹{{ price_per_unit|floatformat:2 }} per {{ unit }}.
+
+Order total: ₹{{ amount|floatformat:2 }}
+
+See the order:
+{{ order_url }}
+
+— {{ site_name }}

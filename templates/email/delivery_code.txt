@@ -1,0 +1,11 @@
+Your delivery code is {{ code }}
+
+Order #{{ order_id }} — {{ quantity }} {{ unit }} of {{ crop_name }}.
+Show this code to the driver when your produce arrives. They cannot mark it
+delivered without it.
+
+The code expires in {{ expires_hours }} hours.
+
+{{ order_url }}
+
+— {{ site_name }}

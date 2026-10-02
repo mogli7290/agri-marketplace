@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Order #{{ order.pk }} · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Order #{{ order.pk }}</h1>
+    <div>
+        <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+        {% if order.payment_status == 'paid' %}
+            <span class="badge bg-success">Paid</span>
+        {% else %}
+            <span class="badge bg-warning text-dark">Payment {{ order.get_payment_status_display }}</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        {% if contact %}
+            <div class="card border-0 shadow-sm mb-4" id="contact">
+                <div class="card-body">
+                    <h2 class="h6 text-brand mb-3">
+                        {% if contact.role == 'farmer' %}Contact your farmer{% else %}Contact your buyer{% endif %}
+                    </h2>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <div class="me-auto">
+                            <div class="fw-semibold">{{ contact.name }}</div>
+                            <div class="text-muted small">
+                                {% if contact.role == 'farmer' %}
+                                    {{ contact.village }}{% if contact.village %}, {% endif %}{{ order.listing.farmer.district }}
+                                {% else %}
+                                    {{ contact.city }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if contact.phone %}
+                            <a class="btn btn-outline-success btn-sm" href="tel:{{ contact.phone }}">
+                                <i class="bi bi-telephone"></i> Call
+                            </a>
+                            {% if contact.whatsapp %}
+                                <a class="btn btn-outline-success btn-sm" href="{{ contact.whatsapp }}"
+                                   target="_blank" rel="noopener">
+                                    <i class="bi bi-whatsapp"></i> WhatsApp
+                                </a>
+                            {% endif %}
+                            <span class="small text-muted">{{ contact.phone }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="form-text mt-2">
+                        Shared because you are both part of this {{ contact.why }}.
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h6 text-brand mb-3">Summary</h2>
+                <dl class="row mb-0">
+                    <dt class="col-5">Crop</dt><dd class="col-7">{{ order.listing.crop.name }} (Grade {{ order.listing.quality_grade }})</dd>
+                    <dt class="col-5">Farmer</dt><dd class="col-7">{{ order.listing.farmer.full_name }}, {{ order.listing.farmer.village }}</dd>
+                    <dt class="col-5">Quantity</dt><dd class="col-7">{{ order.quantity_ordered|floatformat:2 }} {{ order.listing.crop.unit }}</dd>
+                    <dt class="col-5">Unit price</dt><dd class="col-7">₹{{ order.agreed_price_per_unit|floatformat:2 }}</dd>
+                    <dt class="col-5">Subtotal</dt><dd class="col-7">₹{{ order.subtotal|floatformat:2 }}</dd>
+                    <dt class="col-5">Platform fee</dt><dd class="col-7">₹{{ order.platform_fee|floatformat:2 }}</dd>
+                    <dt class="col-5">Delivery fee</dt><dd class="col-7">₹{{ order.delivery_fee|floatformat:2 }}</dd>
+                    <dt class="col-5 fw-bold">Total</dt><dd class="col-7 fw-bold">₹{{ order.total_amount|floatformat:2 }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        {% if order.payments.all %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6 text-brand mb-3">Payments</h2>
+                    <ul class="list-unstyled mb-0 small">
+                        {% for payment in order.payments.all %}
+                            <li class="d-flex justify-content-between border-bottom py-2">
+                                <span>
+                                    ₹{{ payment.amount|floatformat:2 }} · {{ payment.get_status_display }}
+                                    {% if payment.provider == 'upi_to_farmer' %}
+                                        <span class="badge bg-light text-dark">direct to farmer</span>
+                                    {% endif %}
+                                    {% if payment.failure_reason %}
+                                        <div class="text-danger">{{ payment.failure_reason }}</div>
+                                    {% endif %}
+                                    {% if payment.provider == 'upi_to_farmer' and payment.status == 'authorized' and farmer_profile.id == order.listing.farmer.id %}
+                                        <form method="post" action="{% url 'marketplace:direct_payment_confirm' payment.pk %}" class="mt-1">
+                                            {% csrf_token %}
+                                            <button class="btn btn-success btn-sm">
+                                                <i class="bi bi-check2-circle"></i> I received this payment
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </span>
+                                <span class="text-muted">{{ payment.created_at|naturaltime }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h6 text-brand mb-3">Timeline</h2>
+                <ul class="timeline mb-0">
+                    {% for event in order.status_history.all %}
+                        <li>
+                            <div class="fw-semibold">{{ event.get_status_display }}</div>
+                            <div class="text-muted small">{{ event.changed_at|naturaltime }}{% if event.note %} · {{ event.note }}{% endif %}</div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h2 class="h6 text-brand mb-3">Actions</h2>
+                {% if buyer_profile and order.buyer_id == buyer_profile.id %}
+                    {% if can_pay and is_direct %}
+                        <h3 class="h6 mb-2">Pay {{ order.listing.farmer.full_name }} directly</h3>
+                        {% if farmer_upi_link %}
+                            <p class="small text-muted mb-2">
+                                Send <strong>₹{{ order.total_amount|floatformat:2 }}</strong> to the farmer's UPI ID
+                                <code>{{ farmer_upi_id }}</code> — no platform fee on this order.
+                            </p>
+                            <div class="text-center mb-2">
+                                <div id="farmer-qr" class="d-inline-block p-2 bg-white border rounded"></div>
+                            </div>
+                            <a class="btn btn-outline-success w-100 mb-2" href="{{ farmer_upi_link }}">
+                                <i class="bi bi-phone"></i> Open UPI app
+                            </a>
+                            {% if farmer_paid_claim %}
+                                <div class="alert alert-info py-2 mb-0">
+                                    <i class="bi bi-hourglass-split"></i>
+                                    Payment recorded — waiting for the seller to confirm receipt.
+                                </div>
+                            {% else %}
+                                <form method="post" action="{% url 'marketplace:direct_payment_record' order.pk %}" class="mb-2">
+                                    {% csrf_token %}
+                                    <input type="text" name="utr" required maxlength="255"
+                                           class="form-control form-control-sm mb-2"
+                                           placeholder="UTR / transaction reference">
+                                    <button type="submit" class="btn btn-outline-success btn-sm w-100">
+                                        I've paid the seller — record it
+                                    </button>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            <div class="alert alert-warning py-2 mb-0 small">
+                                This order is set for direct payment, but the farmer has no UPI ID on
+                                file yet. Ask them to add one, or ask for a platform payment instead.
+                            </div>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if can_pay and payment_configured and not is_direct %}
+                        <button id="pay-btn" class="btn btn-success w-100 mb-2"
+                                data-url="{% url 'marketplace:payment_initiate' order.pk %}">
+                            <i class="bi bi-credit-card"></i> Pay ₹{{ order.total_amount|floatformat:2 }} (UPI / card)
+                        </button>
+                    {% endif %}
+
+                    {% if can_pay and upi_configured and not is_direct %}
+                        <hr class="my-3">
+                        <h3 class="h6 mb-2">Pay directly via UPI</h3>
+                        <p class="small text-muted mb-2">
+                            Scan the QR with any UPI app (GPay, PhonePe, Paytm, BHIM)
+                            or pay to <strong>{{ upi_payee }}</strong>
+                            (<code>{{ upi_id }}</code>), then record your transaction reference.
+                        </p>
+                        <div class="text-center mb-2">
+                            <div id="upi-qr" class="d-inline-block p-2 bg-white border rounded"></div>
+                        </div>
+                        <a class="btn btn-outline-success w-100 mb-2" href="{{ upi_link }}">
+                            <i class="bi bi-phone"></i> Open UPI app
+                        </a>
+                        {% if upi_claimed %}
+                            <div class="alert alert-info py-2 mb-0">
+                                <i class="bi bi-hourglass-split"></i>
+                                Payment recorded — awaiting confirmation. No further action needed.
+                            </div>
+                        {% else %}
+                            <form method="post" action="{% url 'marketplace:upi_paid' order.pk %}" class="mb-2">
+                                {% csrf_token %}
+                                <input type="text" name="utr" required maxlength="255"
+                                       class="form-control form-control-sm mb-2"
+                                       placeholder="UTR / transaction reference (from your UPI app)">
+                                <button type="submit" class="btn btn-outline-success btn-sm w-100">
+                                    I've paid — record it
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+
+                {% for action in actions %}
+                    {% if action == 'confirmed' %}
+                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'confirm' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2">Confirm order</button></form>
+                    {% elif action == 'picked_up' %}
+                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'pickup' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2">Mark picked up</button></form>
+                    {% elif action == 'in_transit' %}
+                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'dispatch' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2">Mark in transit</button></form>
+                    {% elif action == 'delivered' %}
+                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'deliver' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2">Mark delivered</button></form>
+                    {% elif action == 'cancelled' %}
+                        <form method="post" action="{% url 'marketplace:order_cancel' order.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-danger w-100 mb-2">Cancel order</button></form>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if has_delivery_stop or proof %}
+    <div class="card border-0 shadow-sm mt-4" id="proof">
+        <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+            <span>Proof of delivery</span>
+            {% if proof %}
+                {% if proof.status == 'confirmed' %}
+                    <span class="badge bg-success">confirmed</span>
+                {% elif proof.status == 'disputed' %}
+                    <span class="badge bg-danger">disputed</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">awaiting your confirmation</span>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if delivery_code %}
+                <div class="alert alert-success mb-3">
+                    <strong>Your delivery code: <span style="font-size:1.4rem;letter-spacing:5px;">{{ delivery_code }}</span></strong>
+                    <div class="small mt-1">Read this to your driver. We also emailed it to you.</div>
+                </div>
+            {% endif %}
+
+            {% if proof %}
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        <div class="small text-muted">Recorded</div>
+                        <div>{{ proof.created_at|date:"j M Y, H:i" }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="small text-muted">Evidence on file</div>
+                        <div>
+                            {% for item in evidence %}<span class="badge bg-light text-dark border me-1">{{ item }}</span>{% empty %}<span class="text-muted">none</span>{% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if proof.notes %}<p class="mb-3"><strong>Driver's note:</strong> {{ proof.notes }}</p>{% endif %}
+
+                {% if proof.has_photo %}
+                    <a href="{{ proof.photo.url }}" target="_blank" rel="noopener">
+                        <img src="{{ proof.photo.url }}" alt="Delivery photo" class="img-fluid rounded border mb-3" style="max-height:280px;">
+                    </a>
+                {% endif %}
+
+                {% if proof.has_signature %}
+                    <div class="mb-3">
+                        <div class="small text-muted">Signature</div>
+                        <svg viewBox="0 0 400 120" class="signature-svg" style="width:100%;max-width:400px;height:120px;" role="img" aria-label="Receiver's signature">
+                            <path d="{{ proof.signature }}" fill="none" stroke="#1f7a3f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                {% endif %}
+
+                {% if proof.is_disputed %}
+                    <div class="alert alert-danger small mb-0">
+                        <strong>Disputed:</strong> {{ proof.dispute_reason }}<br>
+                        <span class="text-muted">The delivery charge is on hold until we resolve this.</span>
+                    </div>
+                {% endif %}
+            {% elif not proof %}
+                <p class="text-muted mb-0">
+                    No delivery has been recorded yet. When your produce arrives, the driver
+                    will ask for your delivery code — that is how we both know it really got there.
+                </p>
+            {% endif %}
+
+            {% if can_request_code %}
+                <hr>
+                <form method="post" action="{% url 'marketplace:delivery_code' order.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-success btn-sm">
+                        {% if proof and proof.has_otp %}Send me a new delivery code{% else %}Send me my delivery code{% endif %}
+                    </button>
+                </form>
+            {% endif %}
+
+            {% if can_respond_delivery and proof.status == 'recorded' %}
+                <form method="post" action="{% url 'marketplace:delivery_response' order.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="confirm">
+                    <button class="btn btn-success btn-sm">Yes, it arrived</button>
+                </form>
+            {% endif %}
+
+            {% if can_respond_delivery and proof.status != 'confirmed' %}
+                <button class="btn btn-outline-danger btn-sm" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#disputeBox">Something was wrong</button>
+                <div class="collapse mt-2" id="disputeBox">
+                    <form method="post" action="{% url 'marketplace:delivery_response' order.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="dispute">
+                        <label class="form-label" for="disputeReason">What went wrong?</label>
+                        {{ dispute_form.reason }}
+                        {% for error in dispute_form.reason.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        <button class="btn btn-danger btn-sm mt-2">Dispute this delivery</button>
+                    </form>
+                </div>
+            {% endif %}
+
+            {% if can_resolve_dispute %}
+                <hr>
+                <div class="small text-muted mb-2">Staff: resolve this dispute.</div>
+                <form method="post" action="{% url 'marketplace:delivery_dispute_resolve' order.pk 'release' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-success btn-sm">Release money to transporter</button>
+                </form>
+                <form method="post" action="{% url 'marketplace:delivery_dispute_resolve' order.pk 'refund' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-danger btn-sm">Refund the buyer</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if payment_configured %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    (function () {
+        const btn = document.getElementById("pay-btn");
+        if (!btn) return;
+        btn.addEventListener("click", function () {
+            btn.disabled = true;
+            window.agriPost(btn.dataset.url, new FormData()).then(function (res) {
+                if (!res.ok) {
+                    alert(res.body.error || "Could not start payment.");
+                    btn.disabled = false;
+                    return;
+                }
+                const data = res.body;
+                const options = {
+                    key: data.key_id,
+                    amount: data.amount,
+                    currency: data.currency,
+                    name: data.name,
+                    description: "Order #" + data.order_id,
+                    order_id: data.provider_order_id,
+                    handler: function (response) {
+                        const form = document.createElement("form");
+                        form.method = "POST";
+                        form.action = data.verify_url;
+                        const fields = {
+                            csrfmiddlewaretoken: "{{ csrf_token }}",
+                            order_id: data.order_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                        };
+                        Object.keys(fields).forEach(function (key) {
+                            const input = document.createElement("input");
+                            input.type = "hidden";
+                            input.name = key;
+                            input.value = fields[key];
+                            form.appendChild(input);
+                        });
+                        document.body.appendChild(form);
+                        form.submit();
+                    },
+                    theme: { color: "#2e7d32" },
+                };
+                new Razorpay(options).open();
+                btn.disabled = false;
+            });
+        });
+    })();
+</script>
+{% endif %}
+{% if upi_configured and upi_link or farmer_upi_link %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+    (function () {
+        var target = document.getElementById("upi-qr") || document.getElementById("farmer-qr");
+        var text = document.getElementById("upi-qr") ? "{{ upi_link|escapejs }}" : "{{ farmer_upi_link|escapejs }}";
+        if (!target || !text) return;
+        new QRCode(target, {
+            text: text,
+            width: 160,
+            height: 160,
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    })();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Statement #{{ run.pk }} · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">{{ run.filename }}</h1>
+    <div>
+        {% if run.applied %}
+            <span class="badge bg-success">applied {{ run.applied_at|naturaltime }}</span>
+        {% else %}
+            <span class="badge bg-warning text-dark">preview — nothing settled yet</span>
+        {% endif %}
+    </div>
+</div>
+
+<p class="text-muted">
+    {{ run.total_rows }} credit{{ run.total_rows|pluralize }} in the file ·
+    <strong class="text-success">{{ run.matched_count }} matched</strong> ·
+    <strong class="text-danger">{{ run.unmatched_count }} need review</strong>
+    {% if run.uploaded_by %} · uploaded by {{ run.uploaded_by }}{% endif %}
+</p>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white fw-semibold text-success">
+                Matched payments{% if run.applied %} (settled){% endif %}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>UTR</th><th>Order</th><th>Expected</th><th>Statement</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in matched %}
+                            <tr>
+                                <td><code>{{ row.reference }}</code></td>
+                                <td><a href="{% url 'marketplace:order_detail' row.order_id %}">#{{ row.order_id }}</a></td>
+                                <td>₹{{ row.claimed_amount }}</td>
+                                <td>
+                                    {% if row.statement_amount %}₹{{ row.statement_amount }}{% else %}—{% endif %}
+                                    {% if row.warning %}
+                                        <div class="text-muted small">{{ row.warning }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted small">{{ row.value_date|default:"—" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-4">
+                                Nothing matched in this file.
+                            </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if not run.applied and matched %}
+            <form method="post" action="{% url 'marketplace:payment_reconcile' %}">
+                {% csrf_token %}
+                <input type="hidden" name="reconciliation" value="{{ run.pk }}">
+                <div class="alert alert-warning small">
+                    Confirming settles {{ matched|length }} order{{ matched|length|pluralize }}
+                    and marks each payment captured. This cannot be undone from here.
+                </div>
+                <button class="btn btn-success">
+                    <i class="bi bi-check2-circle"></i>
+                    Confirm {{ matched|length }} matched payment{{ matched|length|pluralize }}
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Needs a human</div>
+            <div class="card-body">
+                {% if reason_counts %}
+                    <ul class="small mb-3">
+                        {% for reason, count in reason_counts.items %}
+                            <li>{{ count }} · {{ reason }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light"><tr><th>UTR</th><th>Amount</th><th>Why</th></tr></thead>
+                        <tbody>
+                            {% for row in unmatched %}
+                                <tr>
+                                    <td><code>{{ row.reference }}</code></td>
+                                    <td>{% if row.amount %}₹{{ row.amount }}{% else %}—{% endif %}</td>
+                                    <td class="small text-muted">{{ row.detail }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted py-4">
+                                    Every credit in this file matched.
+                                </td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p class="mt-4"><a href="{% url 'marketplace:payment_reconcile' %}">&larr; Back to reconciliation</a></p>
+{% endblock %}

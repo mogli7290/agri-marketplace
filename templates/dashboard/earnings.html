@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Earnings · {{ site_name }}{% endblock %}
+
+{% block content %}
+<h1 class="h4 mb-1">Earnings</h1>
+<p class="text-muted">
+    What buyers owe you for produce sold through {{ site_name }}.
+</p>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="small text-muted">Paid out to you</div>
+                <div class="h4 mb-0" data-count="{{ totals.paid_total|floatformat:2 }}" data-count-decimals="2" data-prefix="₹">₹{{ totals.paid_total|floatformat:2 }}</div>
+                <div class="small text-muted">{{ totals.paid_orders }} order{{ totals.paid_orders|pluralize }} settled</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="small text-muted">Already in a statement</div>
+                <div class="h4 mb-0 text-warning" data-count="{{ totals.outstanding_total|floatformat:2 }}" data-count-decimals="2" data-prefix="₹">₹{{ totals.outstanding_total|floatformat:2 }}</div>
+                <div class="small text-muted">awaiting transfer</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="small text-muted">Ready to settle</div>
+                <div class="h4 mb-0 text-success" data-count="{{ pending.gross_amount|floatformat:2 }}" data-count-decimals="2" data-prefix="₹">₹{{ pending.gross_amount|floatformat:2 }}</div>
+                <div class="small text-muted">{{ pending.order_count }} order{{ pending.order_count|pluralize }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if pending.order_count %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white fw-semibold">Waiting to be settled</div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th>#</th><th>Crop</th><th>Quantity</th><th>Your price</th><th>Owed to you</th></tr>
+                </thead>
+                <tbody>
+                    {% for order in pending.orders %}
+                        <tr>
+                            <td><a href="{% url 'marketplace:order_detail' order.pk %}">#{{ order.pk }}</a></td>
+                            <td>{{ order.listing.crop.name }}</td>
+                            <td>{{ order.quantity_ordered|floatformat:2 }} {{ order.listing.crop.unit }}</td>
+                            <td>₹{{ order.agreed_price_per_unit|floatformat:2 }}</td>
+                            <td><strong>₹{{ order.farmer_payout|floatformat:2 }}</strong></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="4" class="text-end">Platform fee on these orders ({{ fee_percent }}%)</th>
+                        <th>− ₹{{ pending.commission_amount|floatformat:2 }}</th>
+                    </tr>
+                    <tr>
+                        <th colspan="4" class="text-end">Delivery charges (not yours)</th>
+                        <th>₹{{ pending.delivery_amount|floatformat:2 }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="alert alert-light border small">
+        <i class="bi bi-info-circle"></i>
+        Settlement runs on a schedule, so orders are paid up to a hold period after they
+        complete — currently anything from {{ cutoff|date:"j M Y" }} onwards. Settlement only
+        covers orders where the buyer paid <em>through the platform</em>; if you offered
+        direct payment instead, you already have that money and there is nothing to settle.
+    </div>
+{% endif %}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold">Statements</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>#</th><th>Period</th><th>Orders</th><th>Net</th><th>Status</th><th>Reference</th></tr>
+            </thead>
+            <tbody>
+                {% for payout in payouts %}
+                    <tr>
+                        <td>#{{ payout.pk }}</td>
+                        <td class="small">{{ payout.period_start|date:"j M" }} – {{ payout.period_end|date:"j M Y" }}</td>
+                        <td>{{ payout.order_count }}</td>
+                        <td><strong>₹{{ payout.net_amount|floatformat:2 }}</strong></td>
+                        <td>
+                            {% if payout.status == 'paid' %}
+                                <span class="badge bg-success">paid</span>
+                            {% elif payout.status == 'approved' %}
+                                <span class="badge bg-info">approved</span>
+                            {% elif payout.status == 'cancelled' %}
+                                <span class="badge bg-secondary">cancelled</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">draft</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ payout.reference|default:"—" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">
+                        No statements yet. They appear once you have settled orders through the platform.
+                    </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if not destination %}
+    <div class="alert alert-warning mt-3 mb-0">
+        <i class="bi bi-exclamation-triangle"></i>
+        No payout details on file.
+        <a href="{% url 'marketplace:payout_methods' %}">Add your UPI ID or bank account</a>
+        so settlements know where to send the money.
+    </div>
+{% elif not destination.is_verified %}
+    <div class="alert alert-info mt-3 mb-0 small">
+        Your payout method has not been verified by staff yet. Settlements still run.
+    </div>
+{% endif %}
+{% endblock %}

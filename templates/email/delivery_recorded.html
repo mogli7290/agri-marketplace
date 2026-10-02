@@ -1,0 +1,23 @@
+{% extends "email/_layout.html" %}
+{% block body %}
+<h1 style="margin:0 0 12px;font-size:18px;">Marked as delivered</h1>
+<p style="margin:0 0 16px;">
+    Order <strong>#{{ order_id }}</strong> — {{ quantity|floatformat:2 }} {{ unit }} of
+    <strong>{{ crop_name }}</strong> from {{ farmer_name }} — has been marked as delivered.
+</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:14px;margin-bottom:16px;">
+    <tr><td style="padding:6px 0;color:#6b7a72;">Evidence on file</td>
+        <td align="right" style="padding:6px 0;">{% if evidence %}{{ evidence|join:", " }}{% else %}none{% endif %}</td></tr>
+</table>
+{% if notes %}<p style="margin:0 0 16px;"><strong>Driver's note:</strong> {{ notes }}</p>{% endif %}
+{% if photo_url %}
+    <p style="margin:0 0 16px;"><img src="{{ photo_url }}" alt="Delivery photo" style="max-width:100%;border-radius:6px;border:1px solid #e3e7e4;"></p>
+{% endif %}
+<p style="margin:20px 0 0;">
+    <a href="{{ order_url }}" style="display:inline-block;background:#1f7a3f;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:6px;font-weight:600;">Confirm or dispute</a>
+</p>
+<p style="margin:12px 0 0;color:#6b7a72;font-size:13px;">
+    Nothing arrived? Dispute it on the order page — the delivery charge is held
+    until you confirm.
+</p>
+{% endblock %}

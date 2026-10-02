@@ -1,0 +1,15 @@
+Order #{order_id} is marked as delivered.
+
+{{ quantity }} {{ unit }} of {{ crop_name }} from {{ farmer_name }}
+Evidence on file: {% if evidence %}{{ evidence|join:", " }}{% else %}none{% endif %}{% if notes %}
+Driver's note: {{ notes }}{% endif %}
+{% if photo_url %}
+Photo of the delivery:
+{{ photo_url }}
+{% endif %}
+If this did not reach you, dispute it on the order page — the delivery charge is
+held until you confirm.
+
+{{ order_url }}
+
+— {{ site_name }}

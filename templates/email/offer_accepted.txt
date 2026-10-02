@@ -1,0 +1,9 @@
+Your offer was accepted.
+
+{{ buyer_name }} has agreed to buy {{ quantity }} {{ unit }} of {{ crop_name }}
+at ₹{{ price_per_unit|floatformat:2 }} per {{ unit }}. Order #{order_id} has been created.
+
+Open the order:
+{{ order_url }}
+
+— {{ site_name }}

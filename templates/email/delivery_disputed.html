@@ -1,0 +1,18 @@
+{% extends "email/_layout.html" %}
+{% block body %}
+<h1 style="margin:0 0 12px;font-size:18px;color:#a4341f;">A delivery has been disputed</h1>
+<p style="margin:0 0 16px;">
+    Order <strong>#{{ order_id }}</strong> — {{ quantity|floatformat:2 }} {{ unit }} of
+    <strong>{{ crop_name }}</strong> to {{ farmer_name }} — has been contested by the buyer.
+</p>
+<div style="background:#fdf3f0;border-left:3px solid #a4341f;padding:12px 16px;margin:0 0 16px;font-size:14px;">
+    <strong>The buyer says:</strong> {{ reason }}
+</div>
+<p style="margin:0 0 16px;">
+    The delivery charge for this stop is on hold until this is resolved. Reply to
+    this email if you have anything to add.
+</p>
+<p style="margin:20px 0 0;">
+    <a href="{{ shipment_url }}" style="display:inline-block;background:#1f7a3f;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:6px;font-weight:600;">See the shipment</a>
+</p>
+{% endblock %}

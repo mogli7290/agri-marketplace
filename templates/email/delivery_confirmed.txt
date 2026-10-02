@@ -1,0 +1,10 @@
+Delivery confirmed for order #{{ order_id }}.
+
+{{ quantity }} {{ unit }} of {{ crop_name }} arrived and the buyer confirmed it.
+Evidence on file: {% if evidence %}{{ evidence|join:", " }}{% else %}none{% endif %}
+
+This delivery is now settled and counts towards your payout.
+
+{{ shipment_url }}
+
+— {{ site_name }}

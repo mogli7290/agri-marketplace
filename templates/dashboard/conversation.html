@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Conversation · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h5 mb-0">
+                {{ counterpart }}
+                {% if conversation.deal_struck %}
+                    <span class="badge bg-success">deal agreed</span>
+                {% elif contact %}
+                    <span class="badge bg-info text-dark">contact shared</span>
+                {% else %}
+                    <span class="badge bg-light text-dark">contact hidden</span>
+                {% endif %}
+            </h1>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'marketplace:conversations' %}">All messages</a>
+        </div>
+
+        {% if conversation.request %}
+            <p class="small text-muted">
+                About request #{{ conversation.request.pk }} —
+                {{ conversation.request.quantity|floatformat:2 }} {{ conversation.request.unit }}
+                {{ conversation.request.crop.name }}
+            </p>
+        {% endif %}
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body" style="max-height: 55vh; overflow-y: auto;">
+                {% for message in messages_list %}
+                    <div class="mb-3 {% if message.sender == request.user %}text-end{% endif %}">
+                        <div class="small text-muted mb-1">
+                            {{ message.sender.get_full_name|default:message.sender.username }} ·
+                            {{ message.created_at|naturaltime }}
+                        </div>
+                        <div class="d-inline-block p-2 rounded"
+                             style="background: {% if message.sender == request.user %}#e8f5e9{% else %}#f1f3f4{% endif %}; max-width: 80%;">
+                            {{ message.body|linebreaksbr }}
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted mb-0">No messages yet. Say hello.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ message_form.body }}
+            {% for error in message_form.body.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+            <button class="btn btn-success mt-2">Send</button>
+        </form>
+
+        {% if contact %}
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white fw-semibold text-success">
+                    <i class="bi bi-unlock"></i>
+                    {% if contact.role == 'farmer' %}Contact for {{ contact.name }}{% else %}Contact for {{ contact.name }}{% endif %}
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        {{ contact.name }} · <strong>{{ contact.phone|default:"no number on file" }}</strong>
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if contact.phone %}
+                            <a class="btn btn-outline-success btn-sm" href="tel:{{ contact.phone }}">
+                                <i class="bi bi-telephone"></i> Call
+                            </a>
+                        {% endif %}
+                        {% if contact.whatsapp %}
+                            <a class="btn btn-outline-success btn-sm" href="{{ contact.whatsapp }}" target="_blank" rel="noopener">
+                                <i class="bi bi-whatsapp"></i> Message on WhatsApp
+                            </a>
+                        {% endif %}
+                        {% if conversation.order_id %}
+                            <a class="btn btn-outline-secondary btn-sm"
+                               href="{% url 'marketplace:order_detail' conversation.order_id %}">
+                                Order #{{ conversation.order_id }}
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="form-text mt-2">
+                        Shared because of {{ contact.why }}.
+                    </div>
+                </div>
+            </div>
+        {% elif is_farmer_side %}
+            <div class="alert alert-light border small mt-4 mb-0">
+                <i class="bi bi-lock"></i> The buyer's phone number stays hidden until a deal is
+                agreed, so the board can't be used to harvest buyer details. Agree an offer and
+                it appears here.
+            </div>
+        {% else %}
+            <div class="alert alert-light border small mt-4 mb-0">
+                <i class="bi bi-lock"></i> Phone numbers appear here once a farmer answers your
+                request, and fully once a deal is agreed.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

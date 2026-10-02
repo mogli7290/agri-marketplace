@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Payout details · {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="h4 mb-1">Payout details</h1>
+        <p class="text-muted">
+            Where delivery charges should be sent for
+            <strong>{{ partner.name }}</strong> ({{ partner.get_vehicle_type_display }}).
+        </p>
+
+        <div class="alert alert-info small">
+            <strong>How this is paid.</strong>
+            Buyers pay a delivery charge at checkout. That money is held by the platform
+            and settled here after your shipment has been completed — on the same weekly
+            run that pays farmers.
+            <a href="{% url 'marketplace:partner_earnings' %}">See what you have earned</a>.
+        </div>
+
+        {% if method %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-muted">Currently saved</div>
+                        <strong>{{ method.display }}</strong>
+                        {% if method.is_verified %}
+                            <span class="badge bg-success">verified</span>
+                        {% else %}
+                            <span class="badge bg-light text-dark">not verified yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Add or replace your payout details</div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button class="btn btn-success">Save payout details</button>
+                </form>
+
+                <p class="text-muted small mt-3 mb-0">
+                    Your account number is stored to pay you and is never shown in full.
+                    Staff mark a method as verified once the account name matches.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
