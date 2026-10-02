@@ -27,6 +27,7 @@ from .models import (
     PriceOffer,
     Reconciliation,
     RequestOffer,
+    ServiceCheck,
     Shipment,
     ShipmentStop,
 )
@@ -449,3 +450,20 @@ class DemandForecastAdmin(admin.ModelAdmin):
     list_filter = ("method", "crop", "region")
     search_fields = ("crop__name", "region")
     readonly_fields = ("created_at",)
+
+
+@admin.register(ServiceCheck)
+class ServiceCheckAdmin(admin.ModelAdmin):
+    """Read-only: these rows are written by the watchdog, not by hand."""
+
+    list_display = ("checked_at", "name", "severity", "detail", "is_transition")
+    list_filter = ("severity", "name", "is_transition")
+    search_fields = ("name", "detail")
+    readonly_fields = ("name", "severity", "detail", "is_transition", "checked_at")
+    date_hierarchy = "checked_at"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

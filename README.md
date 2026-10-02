@@ -30,6 +30,7 @@ Built with **Django 5.2**, **Django REST Framework**, **PostgreSQL**, **Redis**,
 - **[Payments guide](docs/PAYMENTS.md)** — UPI the two ways (gateway or direct), how to enable either, and what's not built yet
 - **[Roadmap](docs/ROADMAP.md)** — prioritised, step-by-step list of remaining work
 - **[Deployment guide](docs/DEPLOYMENT.md)** — step-by-step for Render (free), Docker on a VPS, or any PaaS
+- **[Operations](docs/OPERATIONS.md)** — the health watchdog, what it catches, the keep-alive, and the free-tier limits
 
 ---
 
@@ -120,6 +121,12 @@ Run the tests:
 
 ```bash
 python manage.py test marketplace
+```
+
+Check that a deployment is healthy (what the cron job runs):
+
+```bash
+python manage.py check_services
 ```
 
 ### Environment variables

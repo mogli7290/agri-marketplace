@@ -19,12 +19,18 @@ from django.template.loader import render_to_string
 logger = logging.getLogger(__name__)
 
 
-def send_email(to: str, subject: str, template: str, context: dict) -> bool:
+def send_email(to: str | list[str], subject: str, template: str, context: dict) -> bool:
     """Render ``email/<template>.txt`` (and .html if present) and send it.
+
+    Accepts a single address or a list. Normalising here rather than at each
+    call site matters: passing a list to ``EmailMultiAlternatives(to=[to])``
+    produces ``[["a@b.com"]]``, which some backends reject and the rest mail
+    to a literal string like ``"['a@b.com']"``.
 
     Returns True when the backend accepted the message. Never raises.
     """
-    if not to:
+    recipients = [to] if isinstance(to, str) else [address for address in (to or []) if address]
+    if not recipients:
         logger.warning("Refusing to send %r: no recipient address", subject)
         return False
 
@@ -40,7 +46,7 @@ def send_email(to: str, subject: str, template: str, context: dict) -> bool:
         subject=subject,
         body=text_body,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[to],
+        to=recipients,
     )
     if html_body:
         message.attach_alternative(html_body, "text/html")

@@ -1,0 +1,51 @@
+{% extends "email/_layout.html" %}
+
+{% block body %}
+<p style="margin:0 0 16px;font-size:15px;">{{ headline }}</p>
+
+{% if failing %}
+<p style="margin:0 0 8px;font-weight:600;color:#b3261e;">Now failing</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border-collapse:collapse;">
+    {% for row in failing %}
+    <tr>
+        <td style="padding:8px 0;border-bottom:1px solid #e3e7e4;font-weight:600;width:140px;">{{ row.name }}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #e3e7e4;color:#6b7a72;font-size:14px;">{{ row.detail }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+{% if recovered %}
+<p style="margin:0 0 8px;font-weight:600;color:#1f7a3f;">No longer failing</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border-collapse:collapse;">
+    {% for row in recovered %}
+    <tr>
+        <td style="padding:8px 0;border-bottom:1px solid #e3e7e4;font-weight:600;width:140px;">{{ row.name }}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #e3e7e4;color:#6b7a72;font-size:14px;">now {{ row.severity }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+<p style="margin:0 0 8px;font-weight:600;">Full status</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px;">
+    {% for row in results %}
+    <tr>
+        <td style="padding:7px 0;border-bottom:1px solid #eef1ee;width:90px;color:{% if row.severity == 'fail' %}#b3261e{% elif row.severity == 'warn' %}#a36700{% else %}#1f7a3f{% endif %};font-weight:600;">{{ row.severity|upper }}</td>
+        <td style="padding:7px 0;border-bottom:1px solid #eef1ee;width:110px;">{{ row.name }}</td>
+        <td style="padding:7px 0;border-bottom:1px solid #eef1ee;color:#6b7a72;">{{ row.detail }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% if site_url %}
+<p style="margin:20px 0 0;">
+    <a href="{{ site_url }}" style="color:#1f7a3f;">{{ site_url }}</a>
+</p>
+{% endif %}
+
+<p style="margin:20px 0 0;color:#6b7a72;font-size:13px;">
+    Sent only when a check changes state. A problem that persists is not
+    mailed again until it recovers.
+</p>
+{% endblock %}

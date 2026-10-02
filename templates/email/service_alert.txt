@@ -1,0 +1,19 @@
+{{ headline }}
+
+{% if failing %}NOW FAILING
+--------------
+{% for row in failing %}  * {{ row.name }}: {{ row.detail }}
+{% endfor %}{% endif %}
+{% if recovered %}NO LONGER FAILING
+---------------------
+{% for row in recovered %}  * {{ row.name }} is now {{ row.severity }}
+{% endfor %}{% endif %}
+FULL STATUS
+-----------
+{% for row in results %}  {{ row.severity|upper }}{% if row.severity != "ok" %} {% endif %} {{ row.name }}: {{ row.detail }}
+{% endfor %}
+{% if site_url %}---
+{{ site_url }}
+{% endif %}
+This message is sent only when a check changes state. A problem that
+persists will not be mailed again until it recovers.

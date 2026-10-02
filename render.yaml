@@ -66,3 +66,19 @@ services:
       - key: DJANGO_SUPERUSER_PASSWORD
         sync: false
       # No REDIS_URL: the app uses an in-process cache by default, free.
+
+# The watchdog. Runs the health checks every five minutes and emails the
+  # superuser only when something changes state, so a database that expires or
+  # a migration that never applied announces itself instead of waiting for a
+  # customer to complain.
+  #
+  # NOTE: --keepalive is deliberately NOT enabled here. It stops the free web
+  # service sleeping, but it also occupies essentially your whole monthly
+  # instance-hours allowance. Read docs/OPERATIONS.md before turning it on.
+  - type: cron
+    name: health-watch
+    runtime: docker
+    plan: free
+    schedule: "*/5 * * * *"
+    dockerfilePath: ./Dockerfile
+    command: python manage.py check_services --exit-code

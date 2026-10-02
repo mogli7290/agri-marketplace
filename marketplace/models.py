@@ -1035,3 +1035,110 @@ class DemandForecast(models.Model):
 
     def __str__(self):
         return f"{self.crop} @ {self.region} (+{self.horizon_days}d)"
+
+
+# ---------------------------------------------------------------------------
+# Operations
+# ---------------------------------------------------------------------------
+class ServiceCheck(models.Model):
+    """One result from the health watchdog, kept as a short history.
+
+    Written every few minutes by the ``check_services`` command. The point is
+    not the individual rows but the *transitions*: a site that is merely
+    sleeping looks identical to one that is broken until you compare two runs.
+
+    History is pruned to ``KEEP_ROWS`` in :meth:`record` so an every-5-minute
+    cron does not quietly grow the table by a million rows a year.
+    """
+
+    KEEP_ROWS = 500
+
+    SEVERITY = [
+        ("ok", "OK"),
+        ("warn", "Warning"),
+        ("fail", "Failing"),
+    ]
+
+    name = models.CharField(max_length=50, db_index=True)
+    severity = models.CharField(max_length=8, choices=SEVERITY, default="ok")
+    detail = models.CharField(max_length=255, blank=True)
+    #: True only for the row that changed state, so a repeat failure is not
+    #: mailed twice.
+    is_transition = models.BooleanField(default=False)
+    checked_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-checked_at"]
+        verbose_name_plural = "Service checks"
+        indexes = [
+            models.Index(fields=["name", "-checked_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name}: {self.severity}"
+
+    @property
+    def ok(self) -> bool:
+        return self.severity == "ok"
+
+    @classmethod
+    def record(cls, results: list, *, only_changed: bool = True) -> list:
+        """Persist ``results``; return the rows that represent a new state.
+
+        A check that stays broken should not mail you every five minutes. Only
+        the transition — ok to failing, or back again — is worth an alert.
+
+        A first-ever result is deliberately *not* a transition: on a fresh
+        deploy every check is "new", and treating that as news produces one
+        alert storm instead of silence. ``only_changed=False`` forces every row
+        to count, which is what the tests use.
+        """
+        saved = []
+        for result in results:
+            name = result["name"]
+            severity = result.get("severity", "ok")
+            previous = cls.objects.filter(name=name).order_by("-checked_at").first()
+
+            if only_changed:
+                changed = previous is not None and previous.severity != severity
+            else:
+                changed = True
+
+            saved.append(
+                cls.objects.create(
+                    name=name,
+                    severity=severity,
+                    detail=(result.get("detail") or "")[:255],
+                    is_transition=changed,
+                )
+            )
+
+        cls.prune()
+        return saved
+
+    @classmethod
+    def prune(cls, keep: int = KEEP_ROWS) -> int:
+        """Drop all but the ``keep`` newest rows."""
+        total = cls.objects.count()
+        if total <= keep:
+            return 0
+        doomed = cls.objects.order_by("-checked_at").values_list("pk", flat=True)[keep:]
+        deleted, _ = cls.objects.filter(pk__in=list(doomed)).delete()
+        return deleted
+
+    @classmethod
+    def latest(cls) -> dict:
+        """Newest severity per check name, for a status page."""
+        newest = {}
+        for row in cls.objects.order_by("-checked_at"):
+            newest.setdefault(row.name, row)
+        return newest
+
+    @classmethod
+    def overall(cls) -> str:
+        rows = list(cls.latest().values())
+        if any(row.severity == "fail" for row in rows):
+            return "fail"
+        if any(row.severity == "warn" for row in rows):
+            return "warn"
+        return "ok" if rows else "unknown"
