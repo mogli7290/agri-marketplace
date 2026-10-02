@@ -88,7 +88,9 @@ services:
   - type: cron
     name: health-watch
     runtime: docker
-    plan: free
+    # No `plan` key: Render rejects "free" for service type cron
+    # ("services[1].plan free not a valid plan for service type cron").
+    # Scheduled jobs are not billed like web services.
     schedule: "*/5 * * * *"
     dockerfilePath: ./Dockerfile
     # dockerCommand, not command: on a Docker-runtime service `command` is
