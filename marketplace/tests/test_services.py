@@ -201,3 +201,41 @@ class SiteUrlDerivationTests(SimpleTestCase):
         from config import settings as settings_module
 
         importlib.reload(settings_module)
+
+
+class AiFallbackCoercionTests(TestCase):
+    """The heuristic fallback must survive whatever type it is handed.
+
+    It exists for the moment things are already going wrong, so a float
+    arriving from JSON must not turn a soft failure into a hard one:
+    ``Decimal * float`` raises TypeError.
+    """
+
+    def test_a_float_reference_price_does_not_crash_the_fallback(self):
+        from decimal import Decimal
+
+        from marketplace.services import ai
+
+        with override_settings(AI_API_KEY=""):
+            result = ai.suggest_price("Tomato", "A", "Pune", base_price=40.0, unit="kg")
+        self.assertEqual(result["method"], "heuristic")
+        # Grade A is the 1.00 baseline; B applies 0.90.
+        self.assertEqual(result["price"], Decimal("40.00"))
+        discounted = ai.suggest_price("Tomato", "B", "Pune", base_price=40.0, unit="kg")
+        self.assertEqual(discounted["price"], Decimal("36.00"))
+
+    def test_an_int_reference_price_works_too(self):
+        from decimal import Decimal
+
+        from marketplace.services import ai
+
+        with override_settings(AI_API_KEY=""):
+            result = ai.suggest_price("Tomato", "A", "Pune", base_price=40, unit="kg")
+        self.assertIsInstance(result["price"], Decimal)
+
+    def test_none_still_reports_no_reference_price(self):
+        from marketplace.services import ai
+
+        with override_settings(AI_API_KEY=""):
+            result = ai.suggest_price("Tomato", "A", "Pune", base_price=None, unit="kg")
+        self.assertIsNone(result["price"])

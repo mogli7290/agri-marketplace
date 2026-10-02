@@ -222,6 +222,10 @@ def suggest_price(
         logger.warning("AI price suggestion fell back to heuristic: %s", exc)
         if base_price is None:
             return {"price": None, "method": "heuristic", "rationale": "No reference price available."}
+        # A float would arrive from JSON or a form; Decimal * float raises, and
+        # the fallback exists precisely for when things are already going wrong.
+        if not isinstance(base_price, Decimal):
+            base_price = Decimal(str(base_price))
         multiplier = _QUALITY_MULTIPLIER.get(quality_grade, Decimal("1.00"))
         return {
             "price": (base_price * multiplier).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
