@@ -16,7 +16,12 @@ services:
     name: agrimarket
     runtime: docker
     plan: free
-    region: singapore # nearest free region to India; change if you prefer
+    # No `region` here on purpose. Render pins free instances to Oregon
+    # (US-West); asking for another region puts the web service somewhere the
+    # free Postgres is not, and Render's internal "dpg-..." database hostname
+    # only resolves within its own region. The result is a deploy that dies
+    # with "could not translate host name dpg-... to address", which reads
+    # like a missing database rather than a region mismatch.
     healthCheckPath: /healthz/
     dockerfilePath: ./Dockerfile
     autoDeploy: true
