@@ -132,7 +132,7 @@ See `.env.example` for the full list. The important ones:
 | `DJANGO_DEBUG` | `true` locally, `false` in production |
 | `DJANGO_ALLOWED_HOSTS` | Comma-separated host names |
 | `DATABASE_URL` | Postgres URL (blank → local SQLite) |
-| `REDIS_URL` | Cache backend (blank → in-memory) |
+| `REDIS_URL` | Cache backend (blank → in-memory). Also makes the web-form rate limits shared across workers |
 | `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL` | LLM provider |
 | `SITE_URL` | Public base URL, used to build links in emails. Must be reachable from the device you open the link on, port included |
 | `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` | SMTP for confirmation emails (blank → printed to the terminal) |
@@ -261,6 +261,10 @@ No Redis is required — leave `REDIS_URL` blank and the app uses an in-process
 cache. The hostname is trusted automatically, and the default SSL redirect is
 safe because Render forwards `X-Forwarded-Proto`.
 
+One caveat if you run more than one instance without Redis: the web-form rate
+limits count per process, so each worker keeps its own tally. Setting
+`REDIS_URL` shares them. See [NOTIFICATIONS.md §8](docs/NOTIFICATIONS.md).
+
 **Free-tier realities to know about:**
 
 - Render's free Postgres **expires after ~30 days** (you then upgrade or move
@@ -281,6 +285,7 @@ safe because Render forwards `X-Forwarded-Proto`.
 
 - [ ] `DJANGO_DEBUG=false` and a strong `DJANGO_SECRET_KEY`
 - [ ] `DJANGO_ALLOWED_HOSTS` and `DJANGO_CSRF_TRUSTED_ORIGINS` set to your domain
+- [ ] `SITE_URL` set to the public URL, port included — it is what emailed links use
 - [ ] `DATABASE_URL` points at managed Postgres
 - [ ] `REDIS_URL` configured if you run more than one instance (optional otherwise)
 - [ ] HTTPS terminated upstream; SSL redirect and secure cookies are on by default

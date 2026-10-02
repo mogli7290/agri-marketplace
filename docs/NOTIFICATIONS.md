@@ -208,7 +208,44 @@ choke point, and the delivery-code event is the first thing that would move onto
 it. Adding a spend cap means one counter and one comparison in
 :meth:`~marketplace.services.notifications._deliver`.
 
-## 8. Tests
+## 8. Rate limits on the public forms
+
+The API is metered by DRF (`DEFAULT_THROTTLE_CLASSES`), but DRF only sees views
+it dispatches. The login, register, reset, and resend pages are plain
+`FormView`s, so nothing stopped anyone from trying passwords thousands of times
+a minute or aiming the reset form at a stranger's inbox.
+
+`marketplace/ratelimit.py` caps them, and `RateLimitedFormMixin` in
+`marketplace/views.py` applies it:
+
+| Form | Limit | What counts |
+| --- | --- | --- |
+| Login | 10 / 5 min | Failed attempts only |
+| Register | 5 / hour | Failed attempts only |
+| Forgot password | 5 / hour | Every POST |
+| Resend verification | 5 / hour | Every POST |
+
+The split in the last column is the whole design. Signing in or registering
+correctly is not abuse, and counting it would lock out a real user who fumbled a
+few times first — so a genuine success **clears** the counter. The two mail
+sending forms are the opposite: the cost lands on someone else's inbox, so every
+POST spends an attempt whether or not it sent anything.
+
+Notes for anyone changing this:
+
+* Counters live in the **default cache**, so with `REDIS_URL` set they are
+  shared across gunicorn workers. Without it they are per-process — correct for
+  one dev server, weaker in production.
+* The client identity comes from `X-Forwarded-For` only when `DEBUG` is off.
+  Locally the header is attacker-controlled, so it is ignored.
+* A cache failure degrades to "allowed" and is logged. A broken Redis must never
+  lock someone out of their own account.
+* Django's test runner does **not** reset the cache between tests, so counters
+  leak across test methods. Tests that touch these forms must extend
+  `marketplace.tests.base.CacheResetTestCase`, not `TestCase` — otherwise the
+  suite fails partway through for reasons unrelated to the code.
+
+## 9. Tests
 
 ```bash
 python manage.py test marketplace.tests.test_notifications

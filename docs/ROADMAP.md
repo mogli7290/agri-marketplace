@@ -123,7 +123,11 @@ See `docs/AI.md` §6.
 4. **More tests** — payment webhook, logistics edge cases, permission matrices;
    add coverage reporting. *(M)*
 5. **Accessibility & i18n** — Hindi/regional languages, keyboard/contrast audit. *(M)*
-6. **Abuse controls** — tighter rate limits and input validation on public forms. *(S)*
+6. ~~**Abuse controls**~~ — *partly done.* Rate limits on the public forms are in
+   (`NOTIFICATIONS.md` §8): login, register, password reset, and verification
+   resend are all capped per client address. Still open: CAPTCHA on register,
+   and validation limits on the authenticated forms (offers, requests, chat).
+   *(S)*
 7. **Observability** — structured logs, request metrics, uptime alerting. *(M)*
 
 **Done when:** you'd be comfortable letting strangers use it.

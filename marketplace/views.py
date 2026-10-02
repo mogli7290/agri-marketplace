@@ -18,6 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView
 
 from marketplace import forms
+from marketplace import ratelimit
 from marketplace.models import (
     BuyerProfile,
     Conversation,
@@ -48,10 +49,80 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+class RateLimitedFormMixin:
+    """Meter a public form by client address.
+
+    The API is throttled by DRF, but these are plain ``FormView``s and DRF
+    never sees them. Without this, the sign-in page is an open password oracle
+    and the reset page is a mail cannon pointed at any address you like.
+
+    The counter is only spent on POST. A GET is a page render — someone
+    reloading a form must not lock themselves out of it.
+    """
+
+    #: Key into ``ratelimit._limit_for``'s table; also the cache namespace.
+    rate_limit_scope = "login"
+
+    #: Whether *every* POST spends an attempt, valid form or not. Off by
+    #: default: signing in or registering correctly is not abuse, and counting
+    #: it would lock out a real user who fumbled a few times first. The forms
+    #: that send mail turn this on, because the cost there is someone else's
+    #: inbox. When on, counting happens in ``dispatch`` — some of these views
+    #: override ``form_valid`` and never call ``super()``, so counting there
+    #: would silently never run.
+    count_on_success = False
+
+    def dispatch(self, request, *args, **kwargs):
+        self._rate_identity = ratelimit.client_key(request)
+        is_post = request.method == "POST"
+
+        if is_post:
+            wait = ratelimit.is_limited(self.rate_limit_scope, self._rate_identity)
+            if self.count_on_success and not wait:
+                wait = self._count_attempt()
+            if wait:
+                logger.warning(
+                    "Rate limit hit for %s on %s",
+                    self.rate_limit_scope,
+                    self._rate_identity,
+                )
+                return ratelimit.throttle_response(wait)
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        if not self.count_on_success:
+            # Genuine success: forget the earlier fumbling.
+            self.clear_rate_limit()
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        if not self.count_on_success:
+            # A rejected submission is exactly what a guessing attempt looks
+            # like. This is also where the request that trips the limit gets
+            # refused — refusing only the *next* one would grant a free go.
+            wait = self._count_attempt()
+            if wait:
+                return ratelimit.throttle_response(wait)
+        return super().form_invalid(form)
+
+    def _count_attempt(self):
+        wait = ratelimit.record(self.rate_limit_scope, self._rate_identity)
+        if wait:
+            logger.warning(
+                "%s exceeded its limit for %s", self.rate_limit_scope, self._rate_identity
+            )
+        return wait
+
+    def clear_rate_limit(self):
+        """Forget the caller's attempts — only after real success."""
+        ratelimit.reset(self.rate_limit_scope, self._rate_identity)
+
+
 # ===========================================================================
 # Authentication
 # ===========================================================================
-class LoginView(FormView):
+class LoginView(RateLimitedFormMixin, FormView):
     template_name = "auth/login.html"
     form_class = forms.LoginForm
     success_url = reverse_lazy("marketplace:dashboard")
@@ -100,10 +171,11 @@ class LogoutView(View):
         return redirect("marketplace:dashboard")
 
 
-class RegisterView(CreateView):
+class RegisterView(RateLimitedFormMixin, CreateView):
     template_name = "auth/register.html"
     form_class = forms.RegistrationForm
     success_url = reverse_lazy("marketplace:dashboard")
+    rate_limit_scope = "register"
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -174,7 +246,7 @@ class VerificationSentView(TemplateView):
         return context
 
 
-class VerificationResendView(FormView):
+class VerificationResendView(RateLimitedFormMixin, FormView):
     """Request a fresh confirmation link.
 
     Always reports the same thing, whether or not the address exists, so the page
@@ -184,6 +256,10 @@ class VerificationResendView(FormView):
     template_name = "auth/verify_email_resend.html"
     form_class = forms.EmailResendForm
     success_url = reverse_lazy("marketplace:verification_sent")
+    rate_limit_scope = "verify_resend"
+    #: Every accepted request sends a real email, so the cost of flooding this
+    #: form lands on someone else's inbox — not just on our quota.
+    count_on_success = True
 
     def form_valid(self, form):
         email = form.cleaned_data["email"]
@@ -195,7 +271,7 @@ class VerificationResendView(FormView):
         return redirect(f"{reverse('marketplace:verification_sent')}")
 
 
-class PasswordResetRequestView(FormView):
+class PasswordResetRequestView(RateLimitedFormMixin, FormView):
     """Step one of "forgot my password": email a reset link.
 
     Always reports the same thing whether or not the address exists, so this
@@ -207,6 +283,10 @@ class PasswordResetRequestView(FormView):
     template_name = "auth/password_reset_form.html"
     form_class = forms.PasswordResetForm
     success_url = reverse_lazy("marketplace:password_reset_done")
+    #: Generous for a real person who lost their mail, tight enough to stop
+    #: one address being used to bury someone else's inbox.
+    rate_limit_scope = "password_reset"
+    count_on_success = True
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:

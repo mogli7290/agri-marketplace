@@ -10,12 +10,13 @@ from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase, override_settings
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from marketplace.models import EmailVerification
 from marketplace.services import accounts as accounts_service
+from marketplace.tests.base import CacheResetTestCase
 from marketplace.tests.factories import make_buyer
 
 User = get_user_model()
@@ -42,7 +43,7 @@ def extract_token(message):
     raise AssertionError(f"No verification link in message:\n{body}")
 
 
-class RegistrationGateTests(TestCase):
+class RegistrationGateTests(CacheResetTestCase):
     def test_registration_sends_a_link_and_blocks_the_session(self):
         response = self.client.post(reverse("marketplace:register"), REGISTRATION)
         self.assertEqual(response.status_code, 302)
@@ -141,8 +142,9 @@ class RegistrationGateTests(TestCase):
         self.assertIn("_auth_user_id", self.client.session)
 
 
-class ResendTests(TestCase):
+class ResendTests(CacheResetTestCase):
     def setUp(self):
+        super().setUp()  # clears the rate-limit cache
         self.client.post(reverse("marketplace:register"), REGISTRATION)
         self.user = User.objects.get(username="confirmme")
 
@@ -190,7 +192,7 @@ class ResendTests(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
 
-class ExpiryTests(TestCase):
+class ExpiryTests(CacheResetTestCase):
     @override_settings(EMAIL_VERIFICATION_MAX_AGE=-1)
     def test_expired_link_is_refused(self):
         user = make_buyer(username="expirybuyer").user
@@ -214,7 +216,7 @@ class ExpiryTests(TestCase):
         self.assertTrue(user.email_verification.is_verified)
 
 
-class ServiceTests(TestCase):
+class ServiceTests(CacheResetTestCase):
     def test_operator_created_accounts_are_treated_as_verified(self):
         buyer = make_buyer(username="opbuyer")
         self.assertTrue(accounts_service.is_verified(buyer.user))
@@ -279,7 +281,7 @@ def test_issue_link_produces_a_token_that_actually_verifies(self):
         self.assertTrue(user.email_verification.is_verified)
 
 
-class ShowVerificationCommandTests(TestCase):
+class ShowVerificationCommandTests(CacheResetTestCase):
     def run_command(self, **kwargs):
         from io import StringIO
 

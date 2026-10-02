@@ -20,13 +20,15 @@ from django.urls import reverse
 from django.utils import timezone
 
 from marketplace.services.accounts import site_base_url
+from marketplace.tests.base import CacheResetTestCase
 from marketplace.tests.factories import make_farmer
 
 User = get_user_model()
 
 
-class PasswordResetTestCase(TestCase):
+class PasswordResetTestCase(CacheResetTestCase):
     def setUp(self):
+        super().setUp()  # clears the rate-limit cache
         self.farmer = make_farmer(username="reset_farmer")
         self.user = self.farmer.user
         self.user.set_password("OldPass123")
@@ -206,7 +208,7 @@ class FakeRequest:
         return self.url + path
 
 
-class BaseUrlTestCase(TestCase):
+class BaseUrlTestCase(CacheResetTestCase):
     """A reset link is only as good as the host it carries.
 
     A loopback ``SITE_URL`` mails you a link to ``127.0.0.1``, which on a phone
@@ -247,7 +249,7 @@ class BaseUrlTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
 
 
-class ConfiguredHostTestCase(TestCase):
+class ConfiguredHostTestCase(CacheResetTestCase):
     """A misconfigured host must not slip through as a dead link.
 
     The bug this guards against was real: the dev server ran on 8001 while
@@ -277,7 +279,7 @@ class ConfiguredHostTestCase(TestCase):
         self.assertIn("http://10.0.0.5:8001/password-reset/", mail.outbox[0].body)
 
 
-class EmailedLinkTestCase(TestCase):
+class EmailedLinkTestCase(CacheResetTestCase):
     """Follow the link that was actually emailed, not one built by hand.
 
     The route is ``password-reset/<uidb64>/<token>/`` — two segments. Building
