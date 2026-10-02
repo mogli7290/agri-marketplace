@@ -37,6 +37,16 @@ services:
           name: agrimarket-db
           property: connectionString
 
+      # Without these, notification emails carry no Brevo credentials and
+      # nothing is sent. SITE_URL is not needed: settings.py derives it from
+      # RENDER_EXTERNAL_HOSTNAME, which Render sets at boot.
+      - key: DJANGO_EMAIL_BACKEND
+        value: marketplace.email_backend.BrevoEmailBackend
+      - key: BREVO_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+
       # Fill these in the Render dashboard after the first deploy.
       - key: AI_API_KEY
         sync: false
