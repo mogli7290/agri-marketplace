@@ -75,6 +75,11 @@ services:
   # NOTE: --keepalive is deliberately NOT enabled here. It stops the free web
   # service sleeping, but it also occupies essentially your whole monthly
   # instance-hours allowance. Read docs/OPERATIONS.md before turning it on.
+  #
+  # A cron service is a *separate container* and does not inherit the web
+  # service's environment. It therefore needs its own DJANGO_SECRET_KEY (or
+  # settings.py refuses to start: DEBUG defaults to false when unset) and its
+  # own DATABASE_URL. Expect to be prompted for BREVO_API_KEY twice.
   - type: cron
     name: health-watch
     runtime: docker
@@ -82,3 +87,25 @@ services:
     schedule: "*/5 * * * *"
     dockerfilePath: ./Dockerfile
     command: python manage.py check_services --exit-code
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_TIME_ZONE
+        value: Asia/Kolkata
+      # No RENDER_EXTERNAL_HOSTNAME here (that is a web-service variable), so
+      # the site_url check needs to be told. If Render appends a suffix to the
+      # service name, set this to the real hostname in the dashboard.
+      - key: SITE_URL
+        value: https://agrimarket.onrender.com
+      - key: DJANGO_EMAIL_BACKEND
+        value: marketplace.email_backend.BrevoEmailBackend
+      - key: BREVO_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agrimarket-db
+          property: connectionString
