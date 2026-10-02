@@ -86,10 +86,18 @@ services:
     plan: free
     schedule: "*/5 * * * *"
     dockerfilePath: ./Dockerfile
-    command: python manage.py check_services --exit-code
+    # dockerCommand, not command: on a Docker-runtime service `command` is
+    # ignored, the container falls back to the Dockerfile CMD (gunicorn), and
+    # the job fails with a confusing "file not found" instead of running.
+    dockerCommand: python manage.py check_services --exit-code
     envVars:
       - key: DJANGO_DEBUG
         value: "false"
+      # The entrypoint migrates, collects static files and seeds the crop
+      # catalogue on every start. That is right for the web service and waste
+      # for a job that runs twelve times an hour.
+      - key: SKIP_BOOT_TASKS
+        value: "true"
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DJANGO_TIME_ZONE
