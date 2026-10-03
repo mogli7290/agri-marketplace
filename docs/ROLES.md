@@ -103,4 +103,4 @@ Create one with `python manage.py createsuperuser`.
 | **Shipment planning is staff-only** | `PlanShipmentView`, `IsAdminUser` |
 | **Amount is always computed server-side** from the order, never trusted from the browser | `PaymentInitiateView` |
 
-All of these are covered by tests in `marketplace/tests/` (37 tests).
+All of these are covered by tests in `marketplace/tests/` (473 tests).

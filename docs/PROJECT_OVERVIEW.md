@@ -37,7 +37,7 @@ local dev), **Redis** (optional cache), **Razorpay** (UPI payments) and any
 | Area | Implemented |
 | --- | --- |
 | Authentication | Farmer & buyer roles, email-or-username login, profile view/edit, JWT for the API |
-| Marketplace | Listings with photo, quality grade, organic flag, harvest date; search, crop/district/price filters, pagination |
+| Marketplace | Listings with photo, quality grade, organic flag, harvest date; search, crop/district/price filters, pagination. A listing with no photo falls back to artwork chosen from the crop name (`Crop.placeholder_image`) |
 | Negotiation | Buyers propose their own price; farmers accept or reject. Accepting creates the order at the agreed price (with a fresh stock check) |
 | Orders | Atomic stock reservation, platform fee, delivery fee, status timeline with audit trail |
 | Payments | Razorpay checkout (UPI/cards/netbanking), checkout signature verification, signed webhooks |
@@ -154,7 +154,7 @@ validated centrally, so an illegal jump is rejected everywhere.
 - **API**: JWT auth (`register`, `token`, `me`), role-scoped viewsets, actions
   for pricing/forecasting/payment/shipment planning, filters, throttling.
 - **Ops**: `/healthz`, Docker, docker-compose, gunicorn, nginx, Render blueprint,
-  Procfile, seed command, 37 automated tests, and this documentation.
+  Procfile, seed command, 473 automated tests, and this documentation.
 
 ---
 
@@ -177,7 +177,7 @@ Open <http://127.0.0.1:8000>. Demo logins (after `seed_data --demo`):
 ```bash
 python manage.py check              # config sanity
 python manage.py check --deploy     # production hardening (run with DJANGO_DEBUG=false)
-python manage.py test marketplace   # 37 tests
+python manage.py test marketplace   # 473 tests
 ```
 
 ---

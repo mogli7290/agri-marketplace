@@ -39,7 +39,7 @@ Built with **Django 5.2**, **Django REST Framework**, **PostgreSQL**, **Redis**,
 | Area | What's included |
 | --- | --- |
 | Accounts | Farmer/FPO and buyer roles, email-or-username login, email confirmation, profile management |
-| Marketplace | Listings with photos, grades, organic flag, search & filters, pagination |
+| Marketplace | Listings with photos (crop-specific placeholder art when none is uploaded), grades, organic flag, search & filters, pagination |
 | Negotiation | Buyers propose their own price; farmers accept or reject — accepting creates the order at the agreed price |
 | Demand board | Buyers post "I want 100 kg tomato"; sellers compete with priced offers; message threads; contact unlock on deal |
 | Orders | Atomic stock reservation, platform fee, auditable status timeline |
