@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="No photo uploaded">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef6ee"/>
+      <stop offset="1" stop-color="#dcecdc"/>
+    </linearGradient>
+    <linearGradient id="basket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8a866"/>
+      <stop offset="1" stop-color="#b9854a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#bg)"/>
+
+  <!-- leafy greens behind the crate -->
+  <g fill="#4c9a52" opacity=".92">
+    <path d="M150 168c-26-6-40-28-38-54 22-2 42 12 50 34 4 10 1 16-12 20z"/>
+    <path d="M250 168c26-6 40-28 38-54-22-2-42 12-50 34-4 10-1 16 12 20z"/>
+    <path d="M200 158c-18-8-26-30-20-52 20 4 32 22 32 42 0 9-5 12-12 10z"/>
+  </g>
+
+  <!-- tomato -->
+  <circle cx="200" cy="150" r="30" fill="#d94f3d"/>
+  <path d="M200 122c-8-6-18-4-22 2 6 2 10 5 13 9-4 1-8 3-11 6 8 1 14 0 20-3 6 3 12 4 20 3-3-3-7-5-11-6 3-4 7-7 13-9-4-6-14-8-22-2z" fill="#3f7f43"/>
+
+  <!-- carrots -->
+  <g fill="#e08a2e">
+    <path d="M118 168l-24 44c-2 4 2 7 5 5l44-24z"/>
+    <path d="M282 168l24 44c2 4-2 7-5 5l-44-24z"/>
+  </g>
+  <g fill="#4c9a52">
+    <path d="M114 164c-6-10-4-20 2-26 6 6 9 15 6 24z"/>
+    <path d="M286 164c6-10 4-20-2-26-6 6-9 15-6 24z"/>
+  </g>
+
+  <!-- crate -->
+  <path d="M104 178h192l-14 66a12 12 0 0 1-12 10H130a12 12 0 0 1-12-10z" fill="url(#basket)"/>
+  <g stroke="#8a5f2c" stroke-width="3" opacity=".45">
+    <path d="M110 202h180M114 226h172"/>
+  </g>
+  <rect x="98" y="170" width="204" height="14" rx="7" fill="#c9934f"/>
+
+  <!-- camera glyph hint -->
+  <g opacity=".5" fill="none" stroke="#5c7f62" stroke-width="4" stroke-linejoin="round">
+    <path d="M172 262h56a10 10 0 0 0 10-10v-22a10 10 0 0 0-10-10h-56a10 10 0 0 0-10 10v22a10 10 0 0 0 10 10z"/>
+    <circle cx="200" cy="241" r="10"/>
+    <path d="M182 220l6-8h24l6 8"/>
+  </g>
+</svg>

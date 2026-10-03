@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Wheat">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef6ee"/><stop offset="1" stop-color="#dcecdc"/>
+    </linearGradient>
+    <linearGradient id="grain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8bd5e"/><stop offset="1" stop-color="#c8912f"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <circle cx="200" cy="146" r="94" fill="#fff" opacity=".32"/>
+  <g stroke="#b8862c" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M200 226V92"/><path d="M200 226l-38-52"/><path d="M200 226l38-52"/>
+  </g>
+  <g fill="url(#grain)">
+    <ellipse cx="186" cy="104" rx="11" ry="17"/>
+    <ellipse cx="214" cy="104" rx="11" ry="17"/>
+    <ellipse cx="172" cy="128" rx="10" ry="16"/>
+    <ellipse cx="228" cy="128" rx="10" ry="16"/>
+    <ellipse cx="186" cy="146" rx="9" ry="15"/>
+    <ellipse cx="214" cy="146" rx="9" ry="15"/>
+    <ellipse cx="172" cy="168" rx="9" ry="14"/>
+    <ellipse cx="228" cy="168" rx="9" ry="14"/>
+    <ellipse cx="188" cy="188" rx="8" ry="13"/>
+    <ellipse cx="212" cy="188" rx="8" ry="13"/>
+    <ellipse cx="160" cy="162" rx="9" ry="14"/>
+    <ellipse cx="240" cy="162" rx="9" ry="14"/>
+    <ellipse cx="163" cy="136" rx="9" ry="14"/>
+    <ellipse cx="237" cy="136" rx="9" ry="14"/>
+  </g>
+  <g fill="none" stroke="#5c7f62" stroke-width="4" opacity=".45" stroke-linejoin="round">
+    <path d="M172 258h56a10 10 0 0 0 10-10v-20a10 10 0 0 0-10-10h-56a10 10 0 0 0-10 10v20a10 10 0 0 0 10 10z"/>
+    <path d="M182 218l6-8h24l6 8"/>
+  </g>
+  <circle cx="200" cy="238" r="9" fill="none" stroke="#5c7f62" stroke-width="4" opacity=".45"/>
+</svg>

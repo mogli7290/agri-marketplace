@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Tomato">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef6ee"/><stop offset="1" stop-color="#dcecdc"/>
+    </linearGradient>
+    <radialGradient id="fruit" cx=".35" cy=".3" r=".8">
+      <stop offset="0" stop-color="#e8695a"/><stop offset="1" stop-color="#c33d2e"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <circle cx="200" cy="146" r="94" fill="#fff" opacity=".32"/>
+  <circle cx="200" cy="152" r="66" fill="url(#fruit)"/>
+  <ellipse cx="176" cy="128" rx="17" ry="11" fill="#fff" opacity=".28" transform="rotate(-24 176 128)"/>
+  <g fill="#3f7f43">
+    <path d="M200 92c-26-4-42-20-44-40 20-2 38 8 48 26 3 6 1 12-4 14z"/>
+    <path d="M200 92c26-4 42-20 44-40-20-2-38 8-48 26-3 6-1 12 4 14z"/>
+    <path d="M200 92c-14-6-20-20-16-34 14 4 22 16 22 28 0 4-2 6-6 6z"/>
+  </g>
+  <rect x="196" y="70" width="8" height="26" rx="4" fill="#356b39"/>
+  <g fill="none" stroke="#5c7f62" stroke-width="4" opacity=".45" stroke-linejoin="round">
+    <path d="M172 254h56a10 10 0 0 0 10-10v-20a10 10 0 0 0-10-10h-56a10 10 0 0 0-10 10v20a10 10 0 0 0 10 10z"/>
+    <path d="M182 214l6-8h24l6 8"/>
+  </g>
+  <circle cx="200" cy="234" r="9" fill="none" stroke="#5c7f62" stroke-width="4" opacity=".45"/>
+</svg>

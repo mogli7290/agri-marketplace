@@ -154,6 +154,7 @@ class ListingSerializer(serializers.ModelSerializer):
     farmer_name = serializers.CharField(source="farmer.full_name", read_only=True)
     farmer_village = serializers.CharField(source="farmer.village", read_only=True)
     is_orderable = serializers.BooleanField(read_only=True)
+    placeholder_image = serializers.CharField(source="crop.placeholder_image", read_only=True)
 
     class Meta:
         model = Listing
@@ -161,7 +162,7 @@ class ListingSerializer(serializers.ModelSerializer):
             "id", "farmer", "crop", "crop_name", "crop_unit", "quantity_available",
             "quality_grade", "price_per_unit", "ai_suggested_price", "harvest_date",
             "photo", "description", "is_organic", "status", "created_at",
-            "farmer_name", "farmer_village", "is_orderable",
+            "farmer_name", "farmer_village", "is_orderable", "placeholder_image",
         ]
         read_only_fields = ["id", "created_at", "status", "farmer", "ai_suggested_price"]
 

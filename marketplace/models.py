@@ -140,11 +140,46 @@ class Crop(models.Model):
     unit = models.CharField(max_length=20, default="kg", help_text="kg, quintal, dozen, etc.")
     category = models.CharField(max_length=100, blank=True)
 
+    #: Artwork shown when a listing has no photo. Keyed on a substring of the
+    #: crop name so farmer-entered variants ("Tomato (Hybrid)") still match.
+    #: Longer keywords are tested first, so "Sweet Potato" gets the potato art
+    #: rather than falling through to the generic crate.
+    PLACEHOLDER_IMAGES = {
+        "groundnut": "img/crops/groundnut.svg",
+        "soybean": "img/crops/soybean.svg",
+        "soya bean": "img/crops/soybean.svg",
+        "potato": "img/crops/potato.svg",
+        "tomato": "img/crops/tomato.svg",
+        "onion": "img/crops/onion.svg",
+        "shallot": "img/crops/onion.svg",
+        "banana": "img/crops/banana.svg",
+        "plantain": "img/crops/banana.svg",
+        "mango": "img/crops/mango.svg",
+        "wheat": "img/crops/wheat.svg",
+        "rice": "img/crops/rice.svg",
+        "paddy": "img/crops/rice.svg",
+        "maize": "img/crops/maize.svg",
+        "corn": "img/crops/maize.svg",
+    }
+    DEFAULT_PLACEHOLDER_IMAGE = "img/listing-placeholder.svg"
+
+    #: Sorted longest-first so the most specific keyword wins.
+    PLACEHOLDER_KEYWORDS = sorted(PLACEHOLDER_IMAGES, key=len, reverse=True)
+
     class Meta:
         ordering = ["name"]
 
     def __str__(self):
         return self.name
+
+    @property
+    def placeholder_image(self) -> str:
+        """Static path to this crop's placeholder art, for listings with no photo."""
+        name = self.name.lower()
+        for keyword in self.PLACEHOLDER_KEYWORDS:
+            if keyword in name:
+                return self.PLACEHOLDER_IMAGES[keyword]
+        return self.DEFAULT_PLACEHOLDER_IMAGE
 
 
 class Listing(TimeStampedModel):

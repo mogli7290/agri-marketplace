@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Mango">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef6ee"/><stop offset="1" stop-color="#dcecdc"/>
+    </linearGradient>
+    <linearGradient id="skin" x1=".25" y1="0" x2=".85" y2="1">
+      <stop offset="0" stop-color="#f7c04a"/><stop offset=".55" stop-color="#ee9a2c"/>
+      <stop offset="1" stop-color="#d2601f"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <circle cx="200" cy="146" r="94" fill="#fff" opacity=".32"/>
+  <path d="M200 104c34-12 62 6 66 40 4 36-22 62-58 62-34 0-56-22-54-52 2-24 18-42 46-50z" fill="url(#skin)"/>
+  <path d="M214 148c-14 18-38 30-62 30 8 16 26 28 46 28 26 0 44-14 50-34-10-10-22-18-34-24z" fill="#d9552a" opacity=".45"/>
+  <ellipse cx="168" cy="128" rx="14" ry="9" fill="#fff" opacity=".3" transform="rotate(-26 168 128)"/>
+  <path d="M200 106c0-14 4-24 12-30" fill="none" stroke="#7a5a2c" stroke-width="7" stroke-linecap="round"/>
+  <path d="M212 76c22-6 40 2 48 18-20 10-40 6-52-8-3-4-1-8 4-10z" fill="#4c9a52"/>
+  <path d="M214 78c14 2 28 8 40 16" fill="none" stroke="#3f7f43" stroke-width="3" opacity=".6"/>
+  <g fill="none" stroke="#5c7f62" stroke-width="4" opacity=".45" stroke-linejoin="round">
+    <path d="M172 258h56a10 10 0 0 0 10-10v-20a10 10 0 0 0-10-10h-56a10 10 0 0 0-10 10v20a10 10 0 0 0 10 10z"/>
+    <path d="M182 218l6-8h24l6 8"/>
+  </g>
+  <circle cx="200" cy="238" r="9" fill="none" stroke="#5c7f62" stroke-width="4" opacity=".45"/>
+</svg>

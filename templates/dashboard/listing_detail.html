@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load humanize static %}
 {% block title %}{{ listing.crop.name }} from {{ listing.farmer.village }} · {{ site_name }}{% endblock %}
 
 {% block content %}
@@ -8,7 +8,7 @@
         {% if listing.photo %}
             <img src="{{ listing.photo.url }}" class="img-fluid rounded shadow-sm" alt="{{ listing.crop.name }}">
         {% else %}
-            <div class="placeholder-photo rounded"><i class="bi bi-flower2"></i></div>
+            <img src="{% static listing.crop.placeholder_image %}" class="img-fluid rounded shadow-sm w-100" alt="No photo of {{ listing.crop.name }}">
         {% endif %}
     </div>
     <div class="col-lg-7">

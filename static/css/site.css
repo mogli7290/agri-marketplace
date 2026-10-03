@@ -158,9 +158,10 @@ body {
     border-color: rgba(31, 122, 63, .35);
 }
 
-/* The photo scales a touch slower than the card, which reads as depth. */
-.listing-card .listing-photo,
-.listing-card .placeholder-photo {
+/* The photo scales a touch slower than the card, which reads as depth. A
+   listing with no photo renders crop artwork instead, and it is an <img>, so
+   it flows through these same rules. */
+.listing-card .listing-photo {
     height: 180px;
     object-fit: cover;
     width: 100%;
@@ -169,23 +170,8 @@ body {
     transition: transform 520ms var(--ease-out);
 }
 
-.listing-card:hover .listing-photo,
-.listing-card:hover .placeholder-photo {
+.listing-card:hover .listing-photo {
     transform: scale(1.06);
-}
-
-.placeholder-photo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--brand);
-    font-size: 2.5rem;
-    animation: float-slow 7s ease-in-out infinite;
-}
-
-@keyframes float-slow {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-6px); }
 }
 
 /* ==========================================================================

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Maize">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef6ee"/><stop offset="1" stop-color="#dcecdc"/>
+    </linearGradient>
+    <linearGradient id="cob" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4d268"/><stop offset="1" stop-color="#dda92c"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <circle cx="200" cy="146" r="94" fill="#fff" opacity=".32"/>
+  <path d="M176 92c-6-14-14-22-26-24 4 12 10 22 20 30z" fill="#6aa84f"/>
+  <path d="M224 92c6-14 14-22 26-24-4 12-10 22-20 30z" fill="#5b9443"/>
+  <rect x="174" y="86" width="52" height="122" rx="26" fill="url(#cob)"/>
+  <g stroke="#c1902a" stroke-width="2" opacity=".5">
+    <path d="M180 116h40M180 142h40M180 168h40"/>
+    <path d="M194 96v102M206 96v102"/>
+  </g>
+  <path d="M174 150c-14 18-20 34-20 48 12-4 22-14 28-26z" fill="#6aa84f"/>
+  <path d="M226 150c14 18 20 34 20 48-12-4-22-14-28-26z" fill="#5b9443"/>
+  <path d="M170 208c-6 12-6 22-2 30 8-6 12-16 12-26z" fill="#6aa84f" opacity=".85"/>
+  <path d="M230 208c6 12 6 22 2 30-8-6-12-16-12-26z" fill="#5b9443" opacity=".85"/>
+  <g fill="none" stroke="#5c7f62" stroke-width="4" opacity=".45" stroke-linejoin="round">
+    <path d="M172 258h56a10 10 0 0 0 10-10v-20a10 10 0 0 0-10-10h-56a10 10 0 0 0-10 10v20a10 10 0 0 0 10 10z"/>
+    <path d="M182 218l6-8h24l6 8"/>
+  </g>
+  <circle cx="200" cy="238" r="9" fill="none" stroke="#5c7f62" stroke-width="4" opacity=".45"/>
+</svg>

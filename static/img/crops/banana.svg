@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Banana">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef6ee"/><stop offset="1" stop-color="#dcecdc"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6dc74"/><stop offset="1" stop-color="#d9ad2c"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <circle cx="200" cy="146" r="94" fill="#fff" opacity=".32"/>
+  <path d="M148 92c-4-10-2-16 4-18 4 8 4 14 0 20z" fill="#8a6a24"/>
+  <path d="M158 96c22 4 52 22 74 52 12 16 8 32-8 34-18 2-42-16-60-38-14-18-16-36-6-48z" fill="url(#skin)"/>
+  <path d="M162 108c20 6 44 22 62 46 8 12 8 20 2 24-16-4-38-20-52-38-12-16-16-26-12-32z" fill="#e9c74a"/>
+  <path d="M172 104c18 4 42 20 60 42" fill="none" stroke="#c99b28" stroke-width="3" opacity=".55" stroke-linecap="round"/>
+  <path d="M164 130c16 4 38 18 54 36" fill="none" stroke="#c99b28" stroke-width="3" opacity=".45" stroke-linecap="round"/>
+  <path d="M158 96c-10-2-18 0-24 6 8 6 18 6 26 2z" fill="#7a5d1f"/>
+  <g fill="none" stroke="#5c7f62" stroke-width="4" opacity=".45" stroke-linejoin="round">
+    <path d="M172 258h56a10 10 0 0 0 10-10v-20a10 10 0 0 0-10-10h-56a10 10 0 0 0-10 10v20a10 10 0 0 0 10 10z"/>
+    <path d="M182 218l6-8h24l6 8"/>
+  </g>
+  <circle cx="200" cy="238" r="9" fill="none" stroke="#5c7f62" stroke-width="4" opacity=".45"/>
+</svg>
