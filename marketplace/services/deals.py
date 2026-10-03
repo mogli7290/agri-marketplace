@@ -85,19 +85,51 @@ def save_payout_method(user, *, kind: str, upi_id: str = "", account_holder: str
         if not (ifsc and len(ifsc) == 11 and ifsc[:4].isalpha() and ifsc[4:].isalnum()):
             raise DealError("Enter a valid IFSC code, e.g. HDFC0001234.")
 
+    details = {
+        "upi_id": upi_id,
+        "account_holder": account_holder,
+        "account_number": account_number,
+        "ifsc": ifsc,
+    }
+    existing = PayoutMethod.objects.filter(user=user, kind=kind).first()
     method, _ = PayoutMethod.objects.update_or_create(
-        user=user,
-        kind=kind,
-        defaults={
-            "upi_id": upi_id,
-            "account_holder": account_holder,
-            "account_number": account_number,
-            "ifsc": ifsc,
-            "is_primary": True,
-        },
+        user=user, kind=kind,
+        defaults={**details, "is_primary": True},
     )
+    _revoke_stale_verification(method, _details_changed(existing, **details))
     logger.info("Saved %s payout method for %s", kind, user)
     return method
+
+
+def _details_changed(existing, **new_details) -> bool:
+    """Whether a save would alter any field a verification was made against.
+
+    Compared against the row as it stands *before* the write, because
+    ``update_or_create`` has already put the new values on it by the time it
+    returns.
+    """
+    if existing is None:
+        return False
+    return any(getattr(existing, field) != value for field, value in new_details.items())
+
+
+def _revoke_stale_verification(method, details_changed: bool) -> None:
+    """Changing the details drops a check made against the old ones.
+
+    Verification says "we looked at *this* address and it matched this
+    farmer's name". A farmer who was checked once and then swapped the UPI ID
+    would otherwise keep the badge on an address nobody ever looked at, which
+    turns the one signal buyers are told to rely on into decoration.
+    """
+    if not (details_changed and method.is_verified):
+        return
+    method.is_verified = False
+    method.verified_at = None
+    method.verified_by = None
+    method.save(
+        update_fields=["is_verified", "verified_at", "verified_by", "updated_at"]
+    )
+    logger.warning("Payout method %s changed, so its verification was revoked", method.pk)
 
 
 def payout_method_for(farmer: FarmerProfile) -> PayoutMethod | None:
@@ -135,17 +167,18 @@ def save_partner_payout_method(partner, *, kind: str, upi_id: str = "",
         if not (ifsc and len(ifsc) == 11 and ifsc[:4].isalpha() and ifsc[4:].isalnum()):
             raise DealError("Enter a valid IFSC code, e.g. HDFC0001234.")
 
+    details = {
+        "upi_id": upi_id,
+        "account_holder": account_holder,
+        "account_number": account_number,
+        "ifsc": ifsc,
+    }
+    existing = PayoutMethod.objects.filter(delivery_partner=partner, kind=kind).first()
     method, _ = PayoutMethod.objects.update_or_create(
-        delivery_partner=partner,
-        kind=kind,
-        defaults={
-            "upi_id": upi_id,
-            "account_holder": account_holder,
-            "account_number": account_number,
-            "ifsc": ifsc,
-            "is_primary": True,
-        },
+        delivery_partner=partner, kind=kind,
+        defaults={**details, "is_primary": True},
     )
+    _revoke_stale_verification(method, _details_changed(existing, **details))
     logger.info("Saved %s payout method for partner %s", kind, partner)
     return method
 

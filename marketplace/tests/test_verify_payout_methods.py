@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
+from django.urls import reverse
 
 from marketplace.models import PayoutMethod
 from marketplace.services import deals as deals_service
@@ -128,6 +129,53 @@ class VerifyPayoutMethodTests(TestCase):
         self.method.refresh_from_db()
         self.assertEqual(self.method.verified_at, first_time)
         self.assertIn("already verified", output)
+
+    # -- a check only covers the details it was made against ------------------
+
+    def test_changing_the_upi_id_drops_the_verification(self):
+        """Otherwise a farmer verifies once and swaps in an address nobody saw."""
+        run(verify=str(self.method.pk))
+        deals_service.save_payout_method(
+            self.farmer.user, kind="upi", upi_id="someone_else@okaxis"
+        )
+        self.method.refresh_from_db()
+        self.assertEqual(self.method.upi_id, "someone_else@okaxis")
+        self.assertFalse(self.method.is_verified)
+        self.assertIsNone(self.method.verified_at)
+        self.assertIsNone(self.method.verified_by)
+
+    def test_resaving_the_same_upi_id_keeps_the_verification(self):
+        """Re-saving identical details should not make staff re-check it."""
+        run(verify=str(self.method.pk))
+        deals_service.save_payout_method(
+            self.farmer.user, kind="upi", upi_id="farmer@okaxis"
+        )
+        self.method.refresh_from_db()
+        self.assertTrue(self.method.is_verified)
+        self.assertIsNotNone(self.method.verified_at)
+
+    def test_the_badge_follows_the_revocation_on_the_order_page(self):
+        run(verify=str(self.method.pk))
+        deals_service.save_payout_method(
+            self.farmer.user, kind="upi", upi_id="attacker@okaxis"
+        )
+        from decimal import Decimal
+
+        from marketplace.services import orders as order_service
+        from marketplace.tests.factories import make_buyer, make_crop, make_listing
+
+        buyer = make_buyer(username="revoke_buyer")
+        listing = make_listing(
+            farmer=self.farmer, crop=make_crop("Tomato"), quantity="10", price="20"
+        )
+        order = order_service.create_order(buyer, listing, Decimal("5"))
+        self.client.force_login(buyer.user)
+        response = self.client.get(
+            reverse("marketplace:order_detail", args=[order.pk])
+        )
+        self.assertContains(response, "attacker@okaxis")
+        self.assertContains(response, "Not checked yet")
+        self.assertNotContains(response, "Verified by us")
 
     # -- guidance ------------------------------------------------------------
 
