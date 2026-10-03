@@ -154,7 +154,7 @@ validated centrally, so an illegal jump is rejected everywhere.
 - **API**: JWT auth (`register`, `token`, `me`), role-scoped viewsets, actions
   for pricing/forecasting/payment/shipment planning, filters, throttling.
 - **Ops**: `/healthz`, Docker, docker-compose, gunicorn, nginx, Render blueprint,
-  Procfile, seed command, 504 automated tests, and this documentation.
+  Procfile, seed command, 519 automated tests, and this documentation.
 
 ---
 
@@ -177,7 +177,7 @@ Open <http://127.0.0.1:8000>. Demo logins (after `seed_data --demo`):
 ```bash
 python manage.py check              # config sanity
 python manage.py check --deploy     # production hardening (run with DJANGO_DEBUG=false)
-python manage.py test marketplace   # 504 tests
+python manage.py test marketplace   # 519 tests
 ```
 
 ---

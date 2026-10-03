@@ -12,7 +12,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.conf import settings
 from django.db import transaction
 
-from marketplace.models import Listing, Order, OrderStatusHistory
+from marketplace.models import Listing, Order, OrderStatusHistory, Payment
 from marketplace.services import notifications
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,60 @@ def calculate_platform_fee(subtotal: Decimal, payment_route: str = "platform") -
         return Decimal("0.00")
     rate = Decimal(str(settings.PLATFORM_FEE_PERCENT)) / Decimal("100")
     return (subtotal * rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+@transaction.atomic
+def switch_payment_route(order: Order, route: str, user=None) -> Order:
+    """Let the buyer move an unpaid order between platform and direct payment.
+
+    The route used to be fixed when the order was created, which meant a buyer
+    who wanted to pay a farmer directly could only do so if that farmer had
+    opted in by default. This makes the choice the buyer's, at the point where
+    it actually matters, and shows them what each one costs them.
+
+    Switching recomputes the platform fee rather than leaving the old one
+    attached — paying a 2% fee to "save" the fee would be absurd.
+    """
+    from marketplace.services import deals as deals_service
+
+    if route not in dict(Order.PAYMENT_ROUTE_CHOICES):
+        raise OrderError("Unknown payment route.")
+
+    order = Order.objects.select_for_update().select_related(
+        "listing__farmer", "buyer"
+    ).get(pk=order.pk)
+
+    buyer = getattr(user, "buyer_profile", None) if user else None
+    if not (user and (getattr(user, "is_staff", False) or (buyer and order.buyer_id == buyer.id))):
+        raise OrderError("Only the buyer can change how this order is paid.")
+
+    if order.payment_status in {"paid", "refunded"}:
+        raise OrderError("This order has already been settled.")
+    if order.status not in PAYABLE_STATUSES:
+        raise OrderError("This order can no longer be paid.")
+    if order.payment_route == route:
+        return order
+
+    if route == "direct":
+        method = deals_service.payout_method_for(order.listing.farmer)
+        if method is None or method.kind != "upi" or not method.upi_id:
+            raise OrderError(
+                "This farmer has not added a UPI ID, so you cannot pay them directly yet."
+            )
+        if Payment.objects.filter(
+            order=order, provider="upi_to_farmer", status="authorized"
+        ).exists():
+            raise OrderError("A direct payment for this order is already awaiting confirmation.")
+
+    subtotal = order.quantity_ordered * order.agreed_price_per_unit
+    order.payment_route = route
+    order.platform_fee = calculate_platform_fee(subtotal, route)
+    order.save(update_fields=["payment_route", "platform_fee", "updated_at"])
+    logger.info(
+        "Order %s switched to %s payment%s",
+        order.pk, route, f" by {user}" if user else "",
+    )
+    return order
 
 
 @transaction.atomic

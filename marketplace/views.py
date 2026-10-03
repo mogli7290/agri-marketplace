@@ -758,19 +758,26 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         )
         # Direct route: pay the farmer's own UPI ID. No platform fee on these.
         context["is_direct"] = self.object.payment_route == "direct"
+        context["platform_fee_percent"] = settings.PLATFORM_FEE_PERCENT
         context["farmer_upi_id"] = ""
         context["farmer_upi_link"] = ""
+        context["farmer_upi_verified"] = False
         context["farmer_paid_claim"] = any(
             p.provider == upi.FARMER_PROVIDER and p.status == "authorized"
             for p in self.object.payments.all()
         )
-        if self.object.payment_route == "direct":
-            method = deals_service.payout_method_for(self.object.listing.farmer)
-            if method is not None and method.kind == "upi" and method.upi_id:
-                context["farmer_upi_id"] = method.upi_id
-                context["farmer_upi_link"] = upi.build_seller_upi_link(
-                    self.object, method.upi_id, self.object.listing.farmer.full_name
-                )
+        # Shown on both routes, not just direct: the buyer has to be able to
+        # see what paying the farmer directly looks like before choosing it.
+        # It is the farmer's own payment address rather than a secret, but it
+        # goes out with a verified flag, because an unchecked VPA on a page is
+        # trivially faked.
+        method = deals_service.payout_method_for(self.object.listing.farmer)
+        if method is not None and method.kind == "upi" and method.upi_id:
+            context["farmer_upi_id"] = method.upi_id
+            context["farmer_upi_verified"] = bool(method.is_verified)
+            context["farmer_upi_link"] = upi.build_seller_upi_link(
+                self.object, method.upi_id, self.object.listing.farmer.full_name
+            )
         context["actions"] = self.object.STATUS_TRANSITIONS.get(self.object.status, [])
         context["contact"] = deals_service.order_contact(self.object, self.request.user)
         self._add_delivery_context(context)
@@ -843,6 +850,35 @@ class OrderStatusUpdateView(LoginRequiredMixin, View):
             messages.success(request, f"Order marked as {new_status.replace('_', ' ')}.")
         except order_service.OrderError as exc:
             messages.error(request, str(exc))
+        return redirect("marketplace:order_detail", pk=pk)
+
+
+class OrderPaymentRouteView(LoginRequiredMixin, View):
+    """Buyer switches an unpaid order between platform and direct payment.
+
+    Switching is deliberate and explicit rather than something the order was
+    born with, because the two routes differ in ways that matter to the buyer:
+    one keeps their money protected, the other does not.
+    """
+
+    def post(self, request, pk):
+        order = get_object_or_404(
+            Order.objects.select_related("listing__farmer", "buyer"), pk=pk
+        )
+        route = request.POST.get("route", "")
+        try:
+            order_service.switch_payment_route(order, route, user=request.user)
+        except order_service.OrderError as exc:
+            messages.error(request, str(exc))
+        else:
+            if route == "direct":
+                messages.warning(
+                    request,
+                    "Paying the farmer directly means the marketplace cannot refund you "
+                    "if something goes wrong.",
+                )
+            else:
+                messages.success(request, "This order will be paid through the marketplace.")
         return redirect("marketplace:order_detail", pk=pk)
 
 

@@ -58,6 +58,14 @@ urlpatterns = [
         name="delivery_dispute_resolve",
     ),
 
+    # Must come before the <str:action> catch-all below, or "payment-route"
+    # matches as an action name and lands on OrderStatusUpdateView, which
+    # answers 400 instead of doing anything useful.
+    path(
+        "orders/<int:pk>/payment-route/",
+        views.OrderPaymentRouteView.as_view(),
+        name="order_payment_route",
+    ),
     path("orders/<int:pk>/<str:action>/", views.OrderStatusUpdateView.as_view(), name="order_status"),
 
     # Payments

@@ -126,25 +126,60 @@
                     because the steps have to happen in the right order.
                 </p>
                 {% if buyer_profile and order.buyer_id == buyer_profile.id %}
-                    {% if can_pay and is_direct %}
+                    {% if can_pay and farmer_upi_link %}
                         <h3 class="h6 mb-2">Pay {{ order.listing.farmer.full_name }} directly</h3>
-                        {% if farmer_upi_link %}
-                            <p class="small text-muted mb-2">
-                                Send <strong>₹{{ order.total_amount|floatformat:2 }}</strong> to the farmer's UPI ID
-                                <code>{{ farmer_upi_id }}</code> — no platform fee on this order.
-                            </p>
+                        <div class="alert alert-warning small">
+                            <strong>No buyer protection on this option.</strong>
+                            The money goes straight to the farmer's UPI ID. If the goods never
+                            arrive, we cannot refund you — there is no receipt, no dispute route
+                            and no help from us. Pay through the marketplace below if that matters
+                            to you.
+                        </div>
+                        <p class="small text-muted mb-2">
+                            Send <strong>₹{{ order.total_amount|floatformat:2 }}</strong> to the farmer's UPI ID
+                            <code>{{ farmer_upi_id }}</code>
+                            {% if farmer_upi_verified %}
+                                <span class="badge bg-success"><i class="bi bi-patch-check-fill"></i> Verified by us</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark"
+                                      data-bs-toggle="tooltip"
+                                      title="We have not yet checked this UPI ID against the farmer's name. Pay through the marketplace if you are unsure.">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Not checked yet
+                                </span>
+                            {% endif %}
+                        </p>
+                        <div class="alert alert-danger small">
+                            <strong>Only pay the UPI ID shown on this page.</strong>
+                            Never pay an ID sent to you by message, and never follow a payment
+                            link you did not open yourself. Those are the usual ways buyers get
+                            tricked. Check it matches the ID above, character for character.
+                        </div>
+                        {% if is_direct %}
                             <div class="text-center mb-2">
                                 <div id="farmer-qr" class="d-inline-block p-2 bg-white border rounded"></div>
                             </div>
                             <a class="btn btn-outline-success w-100 mb-2" href="{{ farmer_upi_link }}">
                                 <i class="bi bi-phone"></i> Open UPI app
                             </a>
-                            {% if farmer_paid_claim %}
-                                <div class="alert alert-info py-2 mb-0">
-                                    <i class="bi bi-hourglass-split"></i>
-                                    Payment recorded — waiting for the seller to confirm receipt.
+                        {% else %}
+                            <form method="post" action="{% url 'marketplace:order_payment_route' order.pk %}" class="mb-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="route" value="direct">
+                                <button type="submit" class="btn btn-outline-success w-100">
+                                    Pay this farmer directly instead
+                                </button>
+                                <div class="form-text mt-1">
+                                    This removes the {{ platform_fee_percent }}% platform fee from this
+                                    order. You give up the marketplace's refund and dispute help.
                                 </div>
-                            {% else %}
+                            </form>
+                        {% endif %}
+                        {% if is_direct and farmer_paid_claim %}
+                            <div class="alert alert-info py-2 mb-0">
+                                <i class="bi bi-hourglass-split"></i>
+                                Payment recorded — waiting for the seller to confirm receipt.
+                            </div>
+                        {% elif is_direct %}
                                 <form method="post" action="{% url 'marketplace:direct_payment_record' order.pk %}" class="mb-2">
                                     {% csrf_token %}
                                     <label class="form-label small mb-1" for="utr-direct">
@@ -168,13 +203,7 @@
                                     </div>
                                 </form>
                             {% endif %}
-                        {% else %}
-                            <div class="alert alert-warning py-2 mb-0 small">
-                                This order is set for direct payment, but the farmer has no UPI ID on
-                                file yet. Ask them to add one, or ask for a platform payment instead.
-                            </div>
                         {% endif %}
-                    {% endif %}
 
                     {% if can_pay and payment_configured and not is_direct %}
                         <button id="pay-btn" class="btn btn-success w-100 mb-2"
