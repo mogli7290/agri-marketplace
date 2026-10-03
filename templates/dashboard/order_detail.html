@@ -139,7 +139,10 @@
                             Send <strong>₹{{ order.total_amount|floatformat:2 }}</strong> to the farmer's UPI ID
                             <code>{{ farmer_upi_id }}</code>
                             {% if farmer_upi_verified %}
-                                <span class="badge bg-success"><i class="bi bi-patch-check-fill"></i> Verified by us</span>
+                                <span class="badge bg-success"
+                                      {% if farmer_upi_verified_at %}data-bs-toggle="tooltip" title="Checked by our staff on {{ farmer_upi_verified_at|date:'j M Y' }}. If this UPI ID changes, the check no longer applies."{% endif %}>
+                                    <i class="bi bi-patch-check-fill"></i> Verified by us
+                                </span>
                             {% else %}
                                 <span class="badge bg-warning text-dark"
                                       data-bs-toggle="tooltip"

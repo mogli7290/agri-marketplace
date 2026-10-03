@@ -640,6 +640,14 @@ class PayoutMethod(TimeStampedModel):
     is_verified = models.BooleanField(
         default=False, help_text="Set by staff after checking the bank/UPI account name"
     )
+    # Who checked and when. A bare boolean on a payment address that buyers are
+    # told to trust is not worth much: a badge nobody can date, or attribute,
+    # is just an assertion.
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="verified_payout_methods",
+    )
 
     class Meta:
         ordering = ["-is_primary", "-created_at"]

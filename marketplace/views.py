@@ -762,6 +762,7 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         context["farmer_upi_id"] = ""
         context["farmer_upi_link"] = ""
         context["farmer_upi_verified"] = False
+        context["farmer_upi_verified_at"] = None
         context["farmer_paid_claim"] = any(
             p.provider == upi.FARMER_PROVIDER and p.status == "authorized"
             for p in self.object.payments.all()
@@ -775,6 +776,7 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         if method is not None and method.kind == "upi" and method.upi_id:
             context["farmer_upi_id"] = method.upi_id
             context["farmer_upi_verified"] = bool(method.is_verified)
+            context["farmer_upi_verified_at"] = method.verified_at
             context["farmer_upi_link"] = upi.build_seller_upi_link(
                 self.object, method.upi_id, self.object.listing.farmer.full_name
             )
