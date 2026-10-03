@@ -12,6 +12,11 @@ urlpatterns = [
     path("listings/create/", views.ListingCreateView.as_view(), name="listing_create"),
     path("listings/price-hint/", views.ListingPriceHintView.as_view(), name="listing_price_hint"),
     path("listings/<int:pk>/", views.ListingDetailView.as_view(), name="listing_detail"),
+    path(
+        "listings/<int:pk>/contact/",
+        views.ContactSellerView.as_view(),
+        name="contact_seller",
+    ),
     path("listings/<int:pk>/edit/", views.ListingUpdateView.as_view(), name="listing_update"),
     path("listings/<int:pk>/cancel/", views.ListingCancelView.as_view(), name="listing_cancel"),
     path("listings/<int:pk>/order/", views.OrderCreateView.as_view(), name="order_create"),

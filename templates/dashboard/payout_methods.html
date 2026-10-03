@@ -47,6 +47,48 @@
                             {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
                         </div>
                     {% endfor %}
+
+                    <hr class="my-3">
+                    <p class="fw-semibold mb-1">How should buyers pay you?</p>
+                    <p class="small text-muted">
+                        This is your default for new orders. You can still change it for any
+                        single offer you send.
+                    </p>
+                    {% if can_direct %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="radio" name="preferred_route"
+                                   id="route-direct" value="direct"
+                                   {% if preferred_route == 'direct' %}checked{% endif %}>
+                            <label class="form-check-label" for="route-direct">
+                                Directly to my UPI ID
+                                {% include "includes/_help.html" with text="The buyer scans a QR code and pays your UPI ID from the order page. You keep 100% of the money. You then confirm you received it." %}
+                            </label>
+                        </div>
+                        <div class="form-text mb-3">
+                            No marketplace fee. The buyer sees your UPI ID and a QR code on the
+                            order page, pays you, and you confirm you got it.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-light border small">
+                            To be paid directly, add a UPI ID above. Until then buyers pay
+                            through the marketplace.
+                        </div>
+                        <input type="hidden" name="preferred_route" value="platform">
+                    {% endif %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="preferred_route"
+                               id="route-platform" value="platform"
+                               {% if preferred_route != 'direct' or not can_direct %}checked{% endif %}>
+                        <label class="form-check-label" for="route-platform">
+                            Through the marketplace
+                            {% include "includes/_help.html" with text="The buyer pays us, we keep a small fee, and we send you your money later on a weekly payout." %}
+                        </label>
+                    </div>
+                    <div class="form-text mb-3">
+                        A small {{ platform_fee }}% fee, but we settle your money for you and
+                        handle the paperwork.
+                    </div>
+
                     <button class="btn btn-success">Save payout details</button>
                 </form>
 

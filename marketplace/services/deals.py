@@ -28,6 +28,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from marketplace.models import (
+    BuyerProfile,
     Conversation,
     DemandRequest,
     FarmerProfile,
@@ -374,6 +375,22 @@ def buyer_id_for(user):
 def get_or_create_conversation(request: DemandRequest, farmer: FarmerProfile) -> Conversation:
     conversation, _ = Conversation.objects.get_or_create(
         request=request, farmer=farmer, defaults={"buyer": request.buyer}
+    )
+    return conversation
+
+
+def get_or_create_listing_conversation(listing, buyer: BuyerProfile) -> Conversation:
+    """Open (or rejoin) the thread between a buyer and the seller of a listing.
+
+    This is the other way into messaging. The board can only be entered by a
+    buyer who posts a public need, so a buyer browsing a listing had no way to
+    ask a seller a question — they could only order or bid.
+
+    Clicking twice reopens the same thread rather than starting a second one,
+    which is what the unique constraint on (listing, buyer) guarantees.
+    """
+    conversation, _ = Conversation.objects.get_or_create(
+        listing=listing, buyer=buyer, defaults={"farmer": listing.farmer}
     )
     return conversation
 

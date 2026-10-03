@@ -52,13 +52,21 @@ def calculate_platform_fee(subtotal: Decimal, payment_route: str = "platform") -
 
 @transaction.atomic
 def create_order(buyer, listing: Listing, quantity: Decimal, price: Decimal | None = None,
-                 payment_route: str = "platform") -> Order:
+                 payment_route: str | None = None) -> Order:
     """Place an order against a listing and reserve the stock atomically.
 
     ``payment_route`` is the farmer's choice of how to be paid. A ``direct`` order
     skips the platform entirely, so no platform fee is added.
+
+    Left unset, it follows ``FarmerProfile.preferred_payment_route``. That matters
+    because a buyer ordering straight off a listing never passes through the
+    demand board, and the board is the only place the farmer used to get asked.
+    Without this, direct orders — and the farmer's UPI QR on the order page —
+    were reachable only via the board.
     """
     listing = Listing.objects.select_for_update().get(pk=listing.pk)
+    if payment_route is None:
+        payment_route = getattr(listing.farmer, "preferred_payment_route", "platform") or "platform"
 
     if not listing.is_orderable:
         raise OrderError("This listing is no longer available.")

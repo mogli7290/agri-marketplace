@@ -19,6 +19,7 @@ from django.views.generic import CreateView, DetailView, FormView, ListView, Tem
 
 from marketplace import forms
 from marketplace import ratelimit
+from marketplace import models
 from marketplace.models import (
     BuyerProfile,
     Conversation,
@@ -571,6 +572,17 @@ class ListingDetailView(DetailView):
         can_buy = bool(buyer and self.object.is_orderable and not is_owner)
         context["can_place_order"] = can_buy
         context["is_owner"] = is_owner
+        # Contacting the seller is allowed on any listing a buyer can act on,
+        # including one that has sold out — a question about a sold-out listing
+        # is exactly when someone most wants to ask whether more is coming.
+        can_contact = bool(buyer and not is_owner)
+        context["can_contact_seller"] = can_contact
+        if can_contact:
+            context["my_listing_conversation"] = (
+                Conversation.objects.filter(listing=self.object, buyer=buyer)
+                .only("pk")
+                .first()
+            )
         context["order_form"] = forms.OrderForm(listing=self.object)
         context["offer_form"] = forms.OfferForm(listing=self.object) if can_buy else None
         context["my_offer"] = (
@@ -589,6 +601,29 @@ class ListingDetailView(DetailView):
             .select_related("farmer")[:4]
         )
         return context
+
+
+class ContactSellerView(LoginRequiredMixin, View):
+    """Open the thread between a buyer and the seller of a listing.
+
+    One click, straight into the thread. Without this the only way to talk to a
+    seller was to post a public need on the demand board, which is a much
+    heavier thing to ask of a buyer who only has a question.
+    """
+
+    def post(self, request, pk):
+        listing = get_object_or_404(
+            Listing.objects.select_related("farmer"), pk=pk
+        )
+        buyer = getattr(request.user, "buyer_profile", None)
+        if buyer is None:
+            messages.error(request, "Only buyers can start a conversation with a seller.")
+            return redirect("marketplace:listing_detail", pk=pk)
+        if listing.farmer.user_id == request.user.id:
+            messages.error(request, "This is your own listing.")
+            return redirect("marketplace:listing_detail", pk=pk)
+        conversation = deals_service.get_or_create_listing_conversation(listing, buyer)
+        return redirect("marketplace:conversation", pk=conversation.pk)
 
 
 class ListingCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
@@ -1393,6 +1428,7 @@ class PayoutMethodView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 "form": forms.PayoutMethodForm(),
                 "can_direct": deals_service.can_take_direct_payments(farmer),
                 "platform_fee": settings.PLATFORM_FEE_PERCENT,
+                "preferred_route": farmer.preferred_payment_route,
             }
         )
         return context
@@ -1419,6 +1455,21 @@ class PayoutMethodView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             return redirect("marketplace:payout_methods")
 
         messages.success(request, "Payout details saved.")
+
+        # Set the default route only once there is somewhere for the money to go.
+        # Saving "direct" without a UPI ID would silently fall back on the order
+        # page, which is a worse outcome than saying so here.
+        wanted = request.POST.get("preferred_route", "")
+        if wanted in dict(models.PAYMENT_ROUTE_CHOICES):
+            if wanted == "direct" and not deals_service.can_take_direct_payments(farmer):
+                messages.error(
+                    request,
+                    "To take payment directly, add your UPI ID above first.",
+                )
+            elif farmer.preferred_payment_route != wanted:
+                farmer.preferred_payment_route = wanted
+                farmer.save(update_fields=["preferred_payment_route", "updated_at"])
+                messages.success(request, "Buyers will now pay you directly by default.")
         return redirect("marketplace:payout_methods")
 
 

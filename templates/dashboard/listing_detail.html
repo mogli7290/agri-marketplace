@@ -93,8 +93,34 @@
             </div>
         {% elif not user.is_authenticated %}
             <a href="{% url 'marketplace:login' %}?next={{ request.path }}" class="btn btn-success mt-3">Sign in to order</a>
+            <p class="small text-muted mt-2 mb-0">
+                Sign in and you can order, make an offer, or ask {{ listing.farmer.full_name }} a question.
+            </p>
         {% elif farmer_profile and listing.farmer.user_id == user.id %}
             <a href="{% url 'marketplace:listing_update' listing.pk %}" class="btn btn-outline-success mt-3">Edit this listing</a>
+        {% endif %}
+
+        {% if can_contact_seller %}
+            <hr class="my-3">
+            {% if my_listing_conversation %}
+                <a href="{% url 'marketplace:conversation' my_listing_conversation.pk %}"
+                   class="btn btn-outline-success w-100">
+                    <i class="bi bi-chat-dots"></i>
+                    Continue your message to {{ listing.farmer.full_name }}
+                </a>
+            {% else %}
+                <form method="post" action="{% url 'marketplace:contact_seller' listing.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-success w-100">
+                        <i class="bi bi-chat-dots"></i>
+                        Contact {{ listing.farmer.full_name }}
+                    </button>
+                </form>
+                <p class="small text-muted mt-2 mb-0">
+                    Ask a question about this {{ listing.crop.name }} — quantity, quality, pickup
+                    or delivery. You are not ordering anything.
+                </p>
+            {% endif %}
         {% endif %}
     </div>
 </div>

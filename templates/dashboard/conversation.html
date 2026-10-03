@@ -9,11 +9,11 @@
             <h1 class="h5 mb-0">
                 {{ counterpart }}
                 {% if conversation.deal_struck %}
-                    <span class="badge bg-success">deal agreed</span>
+                    <span class="badge bg-success" data-bs-toggle="tooltip" title="An order exists, so both sides can see each other's phone numbers.">deal agreed</span>
                 {% elif contact %}
-                    <span class="badge bg-info text-dark">contact shared</span>
+                    <span class="badge bg-info text-dark" data-bs-toggle="tooltip" title="This person answered, so you can see their phone number.">contact shared</span>
                 {% else %}
-                    <span class="badge bg-light text-dark">contact hidden</span>
+                    <span class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Phone numbers stay hidden until there is a real order. This is what stops anyone harvesting details from the board.">contact hidden</span>
                 {% endif %}
             </h1>
             <a class="btn btn-sm btn-outline-secondary" href="{% url 'marketplace:conversations' %}">All messages</a>
@@ -24,6 +24,13 @@
                 About request #{{ conversation.request.pk }} —
                 {{ conversation.request.quantity|floatformat:2 }} {{ conversation.request.unit }}
                 {{ conversation.request.crop.name }}
+            </p>
+        {% elif conversation.listing %}
+            <p class="small text-muted">
+                About the listing
+                <a href="{% url 'marketplace:listing_detail' conversation.listing.pk %}">{{ conversation.listing.crop.name }}</a>
+                — {{ conversation.listing.quantity_available|floatformat:0 }} {{ conversation.listing.crop.unit }}
+                at ₹{{ conversation.listing.price_per_unit|floatformat:2 }}/{{ conversation.listing.crop.unit }}
             </p>
         {% endif %}
 

@@ -30,6 +30,21 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
+#: Where the buyer's money goes. The seller picks per deal:
+#:   platform - buyer pays the marketplace, which keeps its fee and settles the
+#:              farmer later (the only route that earns the platform a fee)
+#:   direct   - buyer pays the farmer's own UPI ID; the platform is not a party
+#:              to the payment and earns nothing, but the farmer gets 100%
+#:               immediately.
+#:
+#: Module-level because both ``Order`` and ``FarmerProfile`` need it, and
+#: FarmerProfile is declared long before Order.
+PAYMENT_ROUTE_CHOICES = [
+    ("platform", "Through the platform"),
+    ("direct", "Direct to the farmer"),
+]
+
+
 # ---------------------------------------------------------------------------
 # Participants
 # ---------------------------------------------------------------------------
@@ -57,6 +72,12 @@ class FarmerProfile(TimeStampedModel):
         help_text="Pickup location longitude, used for route optimisation",
     )
     kyc_verified = models.BooleanField(default=False)
+    preferred_payment_route = models.CharField(
+        max_length=10,
+        choices=PAYMENT_ROUTE_CHOICES,
+        default="platform",
+        help_text="How buyers pay this farmer by default. Direct needs a UPI ID on file.",
+    )
 
     class Meta:
         ordering = ["full_name"]
@@ -248,16 +269,9 @@ class Order(TimeStampedModel):
         ("failed", "Failed"),
         ("refunded", "Refunded"),
     ]
-    # Where the buyer's money goes. The seller picks per deal:
-    #   platform - buyer pays the marketplace, which keeps its fee and settles
-    #              the farmer later (the only route that earns the platform a fee)
-    #   direct   - buyer pays the farmer's own UPI ID; the platform is not a
-    #              party to the payment and earns nothing, but the farmer gets
-    #              100% immediately.
-    PAYMENT_ROUTE_CHOICES = [
-        ("platform", "Through the platform"),
-        ("direct", "Direct to the farmer"),
-    ]
+    # Where the buyer's money goes. The seller picks per deal; see
+    # PAYMENT_ROUTE_CHOICES at the top of this module.
+    PAYMENT_ROUTE_CHOICES = PAYMENT_ROUTE_CHOICES
 
     # Allowed forward transitions; enforced in the service layer and API.
     STATUS_TRANSITIONS = {
@@ -532,14 +546,22 @@ class RequestOffer(TimeStampedModel):
 
 
 class Conversation(TimeStampedModel):
-    """A private thread between one buyer and one farmer, started by an offer.
+    """A private thread between one buyer and one farmer.
 
-    Both sides can post. Contact details stay hidden until a deal is struck.
+    A thread is started either by a farmer answering a buyer's demand request
+    (``request``) or by a buyer messaging a seller about one of their listings
+    (``listing``). Both sides can post either way. Contact details stay hidden
+    until a deal is struck.
     """
 
     request = models.ForeignKey(
         DemandRequest, on_delete=models.CASCADE, related_name="conversations",
         null=True, blank=True,
+    )
+    listing = models.ForeignKey(
+        Listing, on_delete=models.SET_NULL, related_name="conversations",
+        null=True, blank=True,
+        help_text="Set when the buyer started the thread from a listing instead of the board",
     )
     buyer = models.ForeignKey(BuyerProfile, on_delete=models.CASCADE, related_name="conversations")
     farmer = models.ForeignKey(FarmerProfile, on_delete=models.CASCADE, related_name="conversations")
@@ -553,7 +575,14 @@ class Conversation(TimeStampedModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["request", "farmer"], name="unique_conversation_per_request_farmer"
-            )
+            ),
+            # One thread per buyer per listing, so a buyer clicking "Contact
+            # seller" twice rejoins the same conversation rather than starting
+            # a second one. Postgis/Postgres treat NULLs as distinct, so this
+            # leaves the request-based threads above unaffected.
+            models.UniqueConstraint(
+                fields=["listing", "buyer"], name="unique_conversation_per_listing_buyer"
+            ),
         ]
 
     @property
