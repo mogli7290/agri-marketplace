@@ -83,7 +83,11 @@ def _heuristic_forecast(history: list[float], base_price: Decimal | None, horizo
         # Compare the latest window against the previous one for a light trend.
         trend = 1.0
         if len(history) >= 4:
-            older = mean(history[-8:-4]) or mean(history)
+            # history[-8:-4] is empty for anything shorter than 8 entries, and
+            # mean([]) raises, so only take it when there is a real window.
+            previous = history[-8:-4]
+            older = mean(previous) if previous else 0
+            older = older or mean(history)
             if older:
                 trend = max(0.5, min(1.5, mean(recent) / older))
         predicted_qty = average * (horizon_days / 7) * trend
@@ -93,6 +97,11 @@ def _heuristic_forecast(history: list[float], base_price: Decimal | None, horizo
         predicted_qty = 0.0
         confidence = 35
         rationale = "No historical sales yet; returning a neutral baseline."
+
+    # A float would arrive from JSON or a form; Decimal * float raises, and
+    # this fallback exists precisely for when things are already going wrong.
+    if base_price is not None and not isinstance(base_price, Decimal):
+        base_price = Decimal(str(base_price))
 
     predicted_price = base_price
     if base_price is not None and history:

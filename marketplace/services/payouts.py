@@ -52,7 +52,9 @@ class PayoutError(Exception):
 
 
 def _q(value) -> Decimal:
-    return Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    # Decimal(float) keeps the binary expansion, so 2.675 quantises down to
+    # 2.67 instead of 2.68. Going through str() uses the number as written.
+    return Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def hold_cutoff(reference: date | None = None) -> date:

@@ -48,7 +48,9 @@ class DealError(Exception):
 
 
 def _q(value: Decimal) -> Decimal:
-    return Decimal(value).quantize(Decimal("0.01"))
+    # str() so a float keeps the precision the caller wrote rather than its
+    # binary expansion (2.675 would otherwise round down to 2.67).
+    return Decimal(str(value)).quantize(Decimal("0.01"))
 
 
 # ---------------------------------------------------------------------------

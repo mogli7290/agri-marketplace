@@ -55,7 +55,9 @@ def _auth() -> tuple[str, str]:
 
 def to_paise(amount: Decimal) -> int:
     """Convert rupees to the smallest currency unit (paise for INR)."""
-    return int((Decimal(amount) * 100).to_integral_value())
+    # str() avoids Decimal(float)'s binary expansion, which can shift the
+    # rounded paise figure on values like 2.675.
+    return int((Decimal(str(amount)) * 100).to_integral_value())
 
 
 def _provider_error(response) -> str:

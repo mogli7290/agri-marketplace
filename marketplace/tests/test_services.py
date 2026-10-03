@@ -239,3 +239,61 @@ class AiFallbackCoercionTests(TestCase):
         with override_settings(AI_API_KEY=""):
             result = ai.suggest_price("Tomato", "A", "Pune", base_price=None, unit="kg")
         self.assertIsNone(result["price"])
+
+
+class DecimalCoercionTests(SimpleTestCase):
+    """Float input must never raise, and must not lose a paisa.
+
+    ``Decimal(2.675)`` is really 2.67499999... , so quantising it to two
+    places yields 2.67 where the caller plainly meant 2.68. Routing the value
+    through ``str()`` keeps the number as written.
+    """
+
+    def test_forecast_fallback_survives_a_float_base_price(self):
+        from marketplace.services import ai
+
+        with override_settings(AI_API_KEY=""):
+            result = ai.forecast_demand(
+                "Tomato", "Pune", horizon_days=7, history=[10, 20, 30, 40], base_price=40.0
+            )
+        self.assertEqual(result["method"], "heuristic")
+        self.assertIsInstance(result["predicted_price_per_unit"], Decimal)
+
+    def test_forecast_fallback_handles_a_history_shorter_than_eight(self):
+        # history[-8:-4] is empty below 8 entries, and mean([]) raises.
+        from marketplace.services import ai
+
+        for length in range(1, 9):
+            with self.subTest(length=length):
+                with override_settings(AI_API_KEY=""):
+                    result = ai.forecast_demand(
+                        "Tomato",
+                        "Pune",
+                        horizon_days=7,
+                        history=[float(i + 1) for i in range(length)],
+                        base_price=Decimal("40.00"),
+                    )
+                self.assertEqual(result["method"], "heuristic")
+                self.assertIsNotNone(result["predicted_quantity"])
+
+    def test_payout_quantize_rounds_as_written(self):
+        from marketplace.services import payouts
+
+        self.assertEqual(payouts._q(2.675), Decimal("2.68"))
+        self.assertEqual(payouts._q(Decimal("2.675")), Decimal("2.68"))
+
+    def test_deal_quantize_rounds_as_written(self):
+        from marketplace.services import deals
+
+        self.assertEqual(deals._q(2.675), Decimal("2.68"))
+
+    def test_offer_quantize_accepts_a_float(self):
+        from marketplace.services import offers
+
+        self.assertEqual(offers._q(10.005), Decimal("10.01"))
+        self.assertEqual(offers._q(Decimal("10.005")), Decimal("10.01"))
+
+    def test_to_paise_does_not_lose_a_paise_to_binary_floats(self):
+        # Decimal(2.675) * 100 is 267.4999..., which truncates to 267 paise.
+        self.assertEqual(payments.to_paise(2.675), 268)
+        self.assertEqual(payments.to_paise(Decimal("40.00")), 4000)

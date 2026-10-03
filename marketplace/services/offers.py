@@ -26,6 +26,10 @@ class OfferError(Exception):
 
 
 def _q(value: Decimal) -> Decimal:
+    # Accept a float without AttributeError, and without the binary-expansion
+    # rounding that Decimal(float) would introduce.
+    if not isinstance(value, Decimal):
+        value = Decimal(str(value))
     return value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
