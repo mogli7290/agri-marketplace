@@ -291,11 +291,14 @@ class ShowVerificationCommandTests(CacheResetTestCase):
 
     def test_prints_a_working_link_for_a_pending_account(self):
         self.client.post(reverse("marketplace:register"), REGISTRATION)
-        output = self.run_command(username="confirmme")
+        # Pass the base explicitly: the default comes from SITE_URL, which is
+        # unset in CI and on a fresh clone, leaving a relative link with no
+        # scheme to follow.
+        output = self.run_command(username="confirmme", base_url="http://testserver")
 
         self.assertIn("pending", output)
         url = next(line.strip() for line in output.splitlines() if "http://" in line)
-        response = self.client.get(url.replace("http://127.0.0.1:8000", ""))
+        response = self.client.get(url.replace("http://testserver", ""))
         self.assertContains(response, "Email confirmed")
 
     def test_explains_when_there_is_nothing_pending(self):

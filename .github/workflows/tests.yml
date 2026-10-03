@@ -1,0 +1,55 @@
+name: Tests
+
+# Every push to main, every PR, and on demand. The suite takes ~9 minutes
+# because password hashing is deliberately slow, so superseding runs on the
+# same branch are cancelled rather than queued behind each other.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Django tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # config/settings.py raises at import when DJANGO_DEBUG is false and no
+      # secret key is set. CI has no .env file, so both are provided here.
+      DJANGO_DEBUG: "true"
+      DJANGO_SECRET_KEY: ci-only-not-a-real-secret-key
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Matches the base image in the Dockerfile, so CI runs on the same
+          # interpreter as production.
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check for missing migrations
+        # A model change with no migration is the quietest Django failure: the
+        # code wants a column, the table lacks it, and it surfaces on one
+        # unlucky request in production.
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run tests
+        run: python manage.py test marketplace
