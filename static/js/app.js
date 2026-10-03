@@ -48,6 +48,48 @@
         });
     }
 
+    // Show/hide toggle on every password field.
+    //
+    // Progressive enhancement: the field renders masked and fully usable with
+    // no JavaScript at all, and this only adds a way to check what was typed
+    // on a shared screen. Matching on input[type=password] means new forms get
+    // it for free — the login form, both registration fields, and the loop-
+    // rendered reset form included. The Django admin has its own templates and
+    // never loads this file, so it is untouched.
+    Array.prototype.forEach.call(
+        document.querySelectorAll("input[type=password]"),
+        function (input) {
+            if (input.dataset.toggleReady) return;
+            input.dataset.toggleReady = "1";
+
+            const wrapper = document.createElement("span");
+            wrapper.className = "password-field";
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "password-toggle";
+            button.setAttribute("aria-label", "Show password");
+            button.setAttribute("aria-pressed", "false");
+            button.innerHTML = '<i class="bi bi-eye"></i>';
+
+            button.addEventListener("click", function () {
+                // Flipping the type keeps the value, so nothing is retyped.
+                const shown = input.type === "text";
+                input.type = shown ? "password" : "text";
+                button.setAttribute("aria-pressed", String(!shown));
+                button.setAttribute("aria-label", shown ? "Show password" : "Hide password");
+                button.innerHTML = shown
+                    ? '<i class="bi bi-eye"></i>'
+                    : '<i class="bi bi-eye-slash"></i>';
+                input.focus();
+            });
+
+            wrapper.appendChild(button);
+        }
+    );
+
     // Demand forecast widget.
     const forecastForm = document.getElementById("forecast-form");
     if (forecastForm) {

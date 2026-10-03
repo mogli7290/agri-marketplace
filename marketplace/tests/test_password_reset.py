@@ -113,6 +113,16 @@ class PasswordResetConfirmTests(PasswordResetTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Choose a new password")
 
+    def test_the_new_password_fields_are_masked(self):
+        """app.js adds the show/hide toggle to whatever it finds masked.
+
+        The fields are rendered by a loop here, so nothing names them in the
+        template — if this ever stops holding, the toggle quietly stops
+        appearing on this page.
+        """
+        response = self.client.get(self.confirm_url())
+        self.assertContains(response, 'type="password"', count=2)
+
     def test_the_password_can_be_changed_and_then_used(self):
         url = self.confirm_url()
         response = self.client.post(

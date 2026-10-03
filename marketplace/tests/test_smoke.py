@@ -62,6 +62,18 @@ class PageSmokeTests(TestCase):
         shipment = logistics.plan_shipment([self.order.pk])
         self.assertEqual(self.client.get(reverse("marketplace:shipment_detail", args=[shipment.pk])).status_code, 200)
 
+    def test_password_fields_exist_for_the_show_hide_toggle(self):
+        """app.js enhances every masked input it finds on the page.
+
+        It is a no-op if a form stops rendering a password field, so these
+        assertions keep the toggle honest.
+        """
+        self.assertContains(self.client.get(reverse("marketplace:login")), 'type="password"')
+        # Registration asks for the password twice, and each gets its own toggle.
+        self.assertContains(
+            self.client.get(reverse("marketplace:register")), 'type="password"', count=2
+        )
+
     def test_unknown_listing_returns_404(self):
         response = self.client.get(reverse("marketplace:listing_detail", args=[999999]))
         self.assertEqual(response.status_code, 404)

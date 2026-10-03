@@ -175,6 +175,41 @@ body {
 }
 
 /* ==========================================================================
+   Show/hide password toggle (added by static/js/app.js)
+   ========================================================================== */
+.password-field {
+    position: relative;
+    display: block;
+}
+
+.password-field input {
+    padding-right: 2.75rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    color: var(--brand);
+    padding: 6px 10px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.password-toggle:hover {
+    background: rgba(31, 122, 63, .08);
+}
+
+.password-toggle:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+}
+
+/* ==========================================================================
    Buttons and form controls
    ========================================================================== */
 .btn {
