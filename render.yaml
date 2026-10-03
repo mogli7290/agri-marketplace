@@ -38,9 +38,11 @@ services:
         value: "false"
       - key: DJANGO_SECRET_KEY
         generateValue: true
-      # Optional; settings also auto-trust RENDER_EXTERNAL_HOSTNAME.
+      # Optional; settings also auto-trust RENDER_EXTERNAL_HOSTNAME. The old
+      # hostname is kept in the list so an older service still resolving does
+      # not start returning 400s if it is ever brought back.
       - key: DJANGO_ALLOWED_HOSTS
-        value: agrimarket.onrender.com
+        value: agri-marketplace-2uui.onrender.com,agrimarket.onrender.com
       - key: DJANGO_TIME_ZONE
         value: Asia/Kolkata
       - key: SEED_ON_BOOT
@@ -144,10 +146,11 @@ services:
       - key: DJANGO_TIME_ZONE
         value: Asia/Kolkata
       # No RENDER_EXTERNAL_HOSTNAME here (that is a web-service variable), so
-      # the site_url check needs to be told. If Render appends a suffix to the
-      # service name, set this to the real hostname in the dashboard.
+      # the site_url check needs to be told. This must be the real hostname:
+      # pointing it at the wrong one makes the watchdog report site_url as
+      # broken while the site itself works fine.
       - key: SITE_URL
-        value: https://agrimarket.onrender.com
+        value: https://agri-marketplace-2uui.onrender.com
       - key: DJANGO_EMAIL_BACKEND
         value: marketplace.email_backend.BrevoEmailBackend
       - key: BREVO_API_KEY

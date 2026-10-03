@@ -14,7 +14,7 @@ python manage.py check_services
   OK    migrations   up to date
   WARN  cache        in-process cache — rate limits are not shared across workers
   OK    email        BrevoEmailBackend
-  OK    site_url     https://agrimarket.onrender.com
+  OK    site_url     https://agri-marketplace-2uui.onrender.com
   OK    disk         68.1% free
 
 All checks passed
