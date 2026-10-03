@@ -1,15 +1,23 @@
-# Render Blueprint — 100% free: free Docker web service + free Postgres.
+# Render Blueprint — free Docker web service.
 # Docs: https://render.com/docs/blueprint-spec
 #
 # Push this repo, then in Render choose "New +" -> "Blueprint" and point it at
-# the repo. Render provisions the database and injects DATABASE_URL
-# automatically. Everything below is free; no paid add-ons are required.
-
-databases:
-  - name: agrimarket-db
-    plan: free
-    databaseName: agrimarket
-    user: agrimarket
+# the repo. Everything below is free; no paid add-ons are required.
+#
+# NO `databases:` BLOCK ON PURPOSE. Render's free Postgres is deleted 30 days
+# after creation, not 30 days of inactivity — a 14-day grace period, then the
+# data is gone. This blueprint used to provision one and wire DATABASE_URL to
+# it, which put a dated database on a 30-day fuse.
+#
+# DATABASE_URL is now set by hand in the dashboard (a Neon pooled connection
+# string) and marked `sync: false` so a blueprint re-apply cannot overwrite it
+# or reintroduce the expiring database. The value is a live password, so it
+# belongs in the dashboard and never in this file.
+#
+# This matters more than it looks: if DATABASE_URL is ever empty, settings.py
+# silently falls back to SQLite inside the container, which is wiped on every
+# redeploy. The site keeps working and loses all data. Check /healthz/ and the
+# env var if registrations disappear after a deploy.
 
 services:
   - type: web
@@ -37,10 +45,15 @@ services:
         value: Asia/Kolkata
       - key: SEED_ON_BOOT
         value: "true"
+      # Set this in the dashboard to a Neon pooled connection string, e.g.
+      # postgresql://user:pass@ep-xxx-pooler.region.aws.neon.tech/neondb?sslmode=require
+      # Keep DB_CONN_MAX_AGE=0 alongside it: a pooled endpoint is a
+      # transaction-mode proxy, and holding a connection open across it
+      # produces intermittent "prepared statement does not exist" errors.
       - key: DATABASE_URL
-        fromDatabase:
-          name: agrimarket-db
-          property: connectionString
+        sync: false
+      - key: DB_CONN_MAX_AGE
+        value: "0"
 
       # Without these, notification emails carry no Brevo credentials and
       # nothing is sent. SITE_URL is not needed: settings.py derives it from
@@ -50,6 +63,27 @@ services:
       - key: BREVO_API_KEY
         sync: false
       - key: DEFAULT_FROM_EMAIL
+        sync: false
+
+      # Media storage. The container filesystem is ephemeral, so uploaded
+      # listing photos and delivery proofs are lost on every redeploy until
+      # USE_S3 is turned on. Set USE_S3=true and fill the AWS_* values once a
+      # bucket exists (Cloudflare R2 and Backblaze B2 are S3-compatible: give
+      # AWS_S3_ENDPOINT_URL the endpoint and AWS_S3_CUSTOM_DOMAIN the public
+      # hostname). See docs/DEPLOYMENT.md section 6.
+      - key: USE_S3
+        value: "false"
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_S3_REGION_NAME
+        sync: false
+      - key: AWS_S3_ENDPOINT_URL
+        sync: false
+      - key: AWS_S3_CUSTOM_DOMAIN
         sync: false
 
       # Fill these in the Render dashboard after the first deploy.
@@ -120,7 +154,10 @@ services:
         sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false
+      # A cron job is a separate container and does not inherit the web
+      # service's environment, so this needs setting independently. Left empty,
+      # the watchdog reports a database failure that is not real.
       - key: DATABASE_URL
-        fromDatabase:
-          name: agrimarket-db
-          property: connectionString
+        sync: false
+      - key: DB_CONN_MAX_AGE
+        value: "0"

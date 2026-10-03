@@ -148,9 +148,56 @@ DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
 | **Supabase** | Generous, no expiry | Postgres + extras |
 | **Render Postgres** | Free, but expires after ~30 days | Fine to start |
 
-To migrate from the expiring Render DB to Neon later: create the Neon database,
-set `DATABASE_URL` to the new string, then run `python manage.py migrate` and
-restore data (`pg_dump`/`pg_restore`) as needed. No code changes.
+To migrate away from the expiring Render DB, see [Moving off Render Postgres](#moving-off-render-postgres) below.
+
+### Moving off Render Postgres
+
+Render's free database is deleted **30 days after it was created**, not 30 days
+of inactivity, followed by a 14-day grace period and then permanent deletion of
+the data. The blueprint creates one automatically, so the clock starts the
+moment you click "Apply".
+
+Do this in the order below. Dumping first and pointing second means there is
+always a working database to fall back to.
+
+1. **Dump the current data** (from a machine that can reach the Render DB):
+
+   ```bash
+   pg_dump "$RENDER_DATABASE_URL" --no-owner --clean --if-exists -Fc -f agrimarket.dump
+   ```
+
+   A `-Fc` custom-format dump compresses and restores with `pg_restore`. Add
+   `--data-only` if you would rather run `migrate` on the new host and copy only
+   the rows.
+
+2. **Create the new database.** Neon and Supabase both give a non-expiring free
+   tier and issue a connection string; copy the **pooled** string from Neon if
+   you use their pooled endpoint.
+
+3. **Load the dump** into the new database:
+
+   ```bash
+   pg_restore -d "$NEW_DATABASE_URL" --no-owner agrimarket.dump
+   ```
+
+4. **Point the app at it.** Set `DATABASE_URL` to the new string in the Render
+   dashboard. Both the web service and the `health-watch` cron need it — a cron
+   job is a separate container and does not inherit the web service's
+   environment, so a missing value there means the watchdog reports a database
+   failure that is not real.
+
+5. **Use the pooled endpoint with `DB_CONN_MAX_AGE=0`.** A pooled connection
+   string points at a transaction-mode proxy. Holding a connection open across
+   it is how you get intermittent "prepared statement does not exist" errors.
+   The default is 600s, which is right for a direct connection.
+
+6. **Verify before deleting anything.** Log in, place a test order, and check
+   `/healthz/` reports the database as OK. Keep the Render database until the
+   new one has served real traffic.
+
+The parser in `config/settings.py` is covered by
+`marketplace/tests/test_database_url.py`, including the Neon URL that carries
+no port.
 
 ---
 
