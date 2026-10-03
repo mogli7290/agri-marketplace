@@ -25,29 +25,35 @@
                             </label>
                             {{ form.price_per_unit }}
                             {% if form.price_per_unit.errors %}<div class="text-danger small">{{ form.price_per_unit.errors|striptags }}</div>{% endif %}
+                            {% if form.price_per_unit.help_text %}<div class="form-text">{{ form.price_per_unit.help_text }}</div>{% endif %}
                         </div>
                         <div class="col-12"><div id="price-hint-output" class="small text-muted"></div></div>
                         <div class="col-md-4">
                             <label class="form-label" for="{{ form.quantity_available.id_for_label }}">Quantity available</label>
                             {{ form.quantity_available }}
                             {% if form.quantity_available.errors %}<div class="text-danger small">{{ form.quantity_available.errors|striptags }}</div>{% endif %}
+                            {% if form.quantity_available.help_text %}<div class="form-text">{{ form.quantity_available.help_text }}</div>{% endif %}
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="{{ form.quality_grade.id_for_label }}">Quality grade</label>
                             {{ form.quality_grade }}
+                            {% if form.quality_grade.help_text %}<div class="form-text">{{ form.quality_grade.help_text }}</div>{% endif %}
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="{{ form.harvest_date.id_for_label }}">Harvest date</label>
                             {{ form.harvest_date }}
                             {% if form.harvest_date.errors %}<div class="text-danger small">{{ form.harvest_date.errors|striptags }}</div>{% endif %}
+                            {% if form.harvest_date.help_text %}<div class="form-text">{{ form.harvest_date.help_text }}</div>{% endif %}
                         </div>
                         <div class="col-12">
                             <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
                             {{ form.description }}
+                            {% if form.description.help_text %}<div class="form-text">{{ form.description.help_text }}</div>{% endif %}
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="{{ form.photo.id_for_label }}">Photo</label>
                             {{ form.photo }}
+                            {% if form.photo.help_text %}<div class="form-text">{{ form.photo.help_text }}</div>{% endif %}
                         </div>
                         <div class="col-md-6 d-flex align-items-end">
                             <div class="form-check">

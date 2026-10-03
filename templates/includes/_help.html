@@ -1,0 +1,16 @@
+{% comment %}
+A small "what is this?" marker for UI that needs explaining.
+
+Usage:
+    {% include "includes/_help.html" with text="What this does." %}
+
+This is supplementary detail only. Never put information here that a user
+must understand: a tooltip needs a hover, and most people using this are on a
+phone, where there is no hover. Anything essential belongs in visible text —
+a form's own help_text, or a <div class="form-text"> next to the control.
+
+tabindex makes it reachable by keyboard, since a hover-only hint is no use to
+someone tabbing through the page.
+{% endcomment %}
+<i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip" title="{{ text }}"
+   tabindex="0" role="img" aria-label="{{ text }}"></i>

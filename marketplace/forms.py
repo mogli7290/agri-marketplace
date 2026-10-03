@@ -165,6 +165,29 @@ class ListingForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["crop"].queryset = Crop.objects.all()
         self.fields["crop"].empty_label = "Select a crop"
+        # Plain-language help. Farmers are not assumed to know what a listing
+        # field means in marketplace terms, and the form template renders this
+        # text under each control — visible on a phone, unlike a tooltip.
+        self.fields["quantity_available"].help_text = (
+            "How much you can sell right now, in the unit you choose (usually kg)."
+        )
+        self.fields["quality_grade"].help_text = (
+            "A is the best quality, C the lowest. Buyers search and filter by this, "
+            "so be honest — it decides what you are offered."
+        )
+        self.fields["price_per_unit"].help_text = (
+            "What one unit sells for. Buyers see this next to your quantity."
+        )
+        self.fields["harvest_date"].help_text = (
+            "The day it was picked or packed. Buyers judge freshness by this."
+        )
+        self.fields["description"].help_text = (
+            "Optional. Say how it was grown, how fresh it is, or how much you can "
+            "supply at once."
+        )
+        self.fields["photo"].help_text = (
+            "Optional, under 5 MB. If you skip it, we show a picture of the crop instead."
+        )
         self.fields["photo"].validators = [
             FileExtensionValidator(["jpg", "jpeg", "png", "webp"])
         ]

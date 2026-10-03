@@ -48,6 +48,18 @@
         });
     }
 
+    // Plain-language help.
+    //
+    // Two mechanisms, deliberately. A tooltip needs a hover, which a phone
+    // does not have — and most of the people using this are on phones — so
+    // anything that must be understood cannot rely on one. Visible helper text
+    // carries the meaning; tooltips add detail for anyone on a desktop.
+    //
+    // Bootstrap does not wire these up on its own; they have to be constructed.
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+        new bootstrap.Tooltip(el, { container: "body" });
+    });
+
     // Show/hide toggle on every password field.
     //
     // Progressive enhancement: the field renders masked and fully usable with

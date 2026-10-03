@@ -121,6 +121,10 @@
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <h2 class="h6 text-brand mb-3">Actions</h2>
+                <p class="small text-muted">
+                    Move the order along as the goods travel. Only the next step is offered,
+                    because the steps have to happen in the right order.
+                </p>
                 {% if buyer_profile and order.buyer_id == buyer_profile.id %}
                     {% if can_pay and is_direct %}
                         <h3 class="h6 mb-2">Pay {{ order.listing.farmer.full_name }} directly</h3>
@@ -143,12 +147,25 @@
                             {% else %}
                                 <form method="post" action="{% url 'marketplace:direct_payment_record' order.pk %}" class="mb-2">
                                     {% csrf_token %}
-                                    <input type="text" name="utr" required maxlength="255"
+                                    <label class="form-label small mb-1" for="utr-direct">
+                                        Transaction reference (UTR)
+                                        {% include "includes/_help.html" with text="A 12-digit number your UPI app shows after paying. The seller uses it to match the money against this order." %}
+                                    </label>
+                                    <input type="text" name="utr" id="utr-direct" required maxlength="255"
                                            class="form-control form-control-sm mb-2"
-                                           placeholder="UTR / transaction reference">
+                                           aria-describedby="utr-direct-help"
+                                           placeholder="e.g. 426781239574">
+                                    <div class="form-text mb-2" id="utr-direct-help">
+                                        Open your UPI app (GPay, PhonePe, Paytm). After you pay, the app
+                                        shows a <strong>UTR</strong> or transaction ID. Copy that number here.
+                                    </div>
                                     <button type="submit" class="btn btn-outline-success btn-sm w-100">
                                         I've paid the seller — record it
                                     </button>
+                                    <div class="form-text mt-1">
+                                        This does not send any money. It only tells the seller to look at
+                                        their own UPI app, where they confirm the money arrived.
+                                    </div>
                                 </form>
                             {% endif %}
                         {% else %}
@@ -188,9 +205,18 @@
                         {% else %}
                             <form method="post" action="{% url 'marketplace:upi_paid' order.pk %}" class="mb-2">
                                 {% csrf_token %}
-                                <input type="text" name="utr" required maxlength="255"
+                                <label class="form-label small mb-1" for="utr-platform">
+                                    Transaction reference (UTR)
+                                    {% include "includes/_help.html" with text="A 12-digit number your UPI app shows after paying, so the money can be matched to this order." %}
+                                </label>
+                                <input type="text" name="utr" id="utr-platform" required maxlength="255"
                                        class="form-control form-control-sm mb-2"
-                                       placeholder="UTR / transaction reference (from your UPI app)">
+                                       aria-describedby="utr-platform-help"
+                                       placeholder="e.g. 426781239574">
+                                <div class="form-text mb-2" id="utr-platform-help">
+                                    After paying, your UPI app shows a <strong>UTR</strong> or transaction ID.
+                                    Copy that number here so we can match the payment to this order.
+                                </div>
                                 <button type="submit" class="btn btn-outline-success btn-sm w-100">
                                     I've paid — record it
                                 </button>
@@ -201,15 +227,15 @@
 
                 {% for action in actions %}
                     {% if action == 'confirmed' %}
-                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'confirm' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2">Confirm order</button></form>
+                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'confirm' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2" data-bs-toggle="tooltip" title="You have the goods ready. Confirming tells the buyer you will fulfil this order.">Confirm order</button></form>
                     {% elif action == 'picked_up' %}
-                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'pickup' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2">Mark picked up</button></form>
+                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'pickup' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2" data-bs-toggle="tooltip" title="The goods have left your farm or collection point and are with the transporter.">Mark picked up</button></form>
                     {% elif action == 'in_transit' %}
-                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'dispatch' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2">Mark in transit</button></form>
+                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'dispatch' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2" data-bs-toggle="tooltip" title="The transporter is on the road to the buyer.">Mark in transit</button></form>
                     {% elif action == 'delivered' %}
-                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'deliver' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2">Mark delivered</button></form>
+                        <form method="post" action="{% url 'marketplace:order_status' order.pk 'deliver' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success w-100 mb-2" data-bs-toggle="tooltip" title="The buyer has received the goods. Only do this once they actually have them.">Mark delivered</button></form>
                     {% elif action == 'cancelled' %}
-                        <form method="post" action="{% url 'marketplace:order_cancel' order.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-danger w-100 mb-2">Cancel order</button></form>
+                        <form method="post" action="{% url 'marketplace:order_cancel' order.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-danger w-100 mb-2" data-bs-toggle="tooltip" title="Stops this order. Use it if you cannot supply, or the buyer changes their mind.">Cancel order</button></form>
                     {% endif %}
                 {% endfor %}
             </div>
